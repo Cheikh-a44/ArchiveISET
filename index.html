@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Archive ISET</title>
+  <style>
+    body { font-family: Tahoma, sans-serif; direction: ltr; background: #f5f7fa; margin: 0; padding: 0; }
+    header { background: #0077b6; color: white; text-align: center; padding: 20px; }
+    header h1 { margin: 0; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap: 10px; padding: 20px; }
+    .card { background: white; padding: 15px; border-radius: 10px; text-align: center; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+    .card:hover { background: #caf0f8; }
+    section { display: none; }
+    section.active { display: block; }
+    ul { list-style: none; padding: 0 20px; }
+    li { background: white; margin: 8px 0; padding: 10px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    a { text-decoration: none; color: #0077b6; font-weight: bold; }
+    .info { text-align: center; color: #555; margin: 10px 0; font-style: italic; }
+    .backBtn { margin: 10px 20px; padding: 10px 15px; background: #0077b6; color: white; border: none; border-radius: 8px; cursor: pointer; }
+    .backBtn:hover { background: #005f87; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>📚 Archive ISET</h1>
+  <p>Sélectionnez l'option pour accéder aux fichiers</p>
+</header>
+
+<section id="years" class="active">
+  <div class="grid">
+    <div class="card" onclick="showSection('semesters')">L1</div>
+    <p class="info">Plus d'années seront ajoutées prochainement</p>
+  </div>
+</section>
+
+<section id="semesters">
+  <button class="backBtn" onclick="showSection('years')">⬅ Retour</button>
+  <div class="grid">
+    <div class="card" onclick="showSection('subjects')">S1</div>
+    <p class="info">Plus de semestres seront ajoutés prochainement</p>
+  </div>
+</section>
+
+<section id="subjects">
+  <button class="backBtn" onclick="showSection('semesters')">⬅ Retour</button>
+  <div class="grid">
+    <div class="card" onclick="selectSubject('Math')">Math</div>
+    <div class="card" onclick="selectSubject('Physique')">Physique</div>
+    <div class="card" onclick="selectSubject('Chimie')">Chimie</div>
+    <div class="card" onclick="selectSubject('Anglais')">Anglais</div>
+    <div class="card" onclick="selectSubject('Français')">Français</div>
+    <div class="card" onclick="selectSubject('Biologie')">Biologie</div>
+    <div class="card" onclick="selectSubject('Microbiologie')">Microbiologie</div>
+    <div class="card" onclick="selectSubject('Génétique')">Génétique</div>
+    <div class="card" onclick="selectSubject('Informatique')">Informatique</div>
+    <div class="card" onclick="selectSubject('Statistique')">Statistique</div>
+  </div>
+</section>
+
+<section id="fileTypes">
+  <button class="backBtn" onclick="showSection('subjects')">⬅ Retour</button>
+  <div class="grid">
+    <div class="card" onclick="showFiles('Cours')">Cours</div>
+    <div class="card" onclick="showFiles('TD')">TD</div>
+    <div class="card" onclick="showFiles('TP')">TP</div>
+    <div class="card" onclick="showFiles('Examens')">Examens</div>
+    <div class="card" onclick="showFiles('Tests')">Tests</div>
+  </div>
+</section>
+
+<section id="filesList">
+  <button class="backBtn" onclick="showSection('fileTypes')">⬅ Retour</button>
+  <ul id="fileListContainer"></ul>
+</section>
+
+<script>
+  let currentSubject = '';
+
+  const filesData = {
+    'Math': {
+      'Cours': [],  // لا يوجد ملفات حالياً
+      'TD': ['files/Math/TD1.pdf'], // الملف الذي أضفته
+      'TP': [],
+      'Examens': [],
+      'Tests': []
+    },
+    'Physique': { 'Cours': [], 'TD': [], 'TP': [], 'Examens': [], 'Tests': [] },
+    'Chimie': { 'Cours': [], 'TD': [], 'TP': [], 'Examens': [], 'Tests': [] },
+    'Anglais': { 'Cours': [], 'TD': [], 'TP': [], 'Examens': [], 'Tests': [] },
+    'Français': { 'Cours': [], 'TD': [], 'TP': [], 'Examens': [], 'Tests': [] },
+    'Biologie': { 'Cours': [], 'TD': [], 'TP': [], 'Examens': [], 'Tests': [] },
+    'Microbiologie': { 'Cours': [], 'TD': [], 'TP': [], 'Examens': [], 'Tests': [] },
+    'Génétique': { 'Cours': [], 'TD': [], 'TP': [], 'Examens': [], 'Tests': [] },
+    'Informatique': { 'Cours': [], 'TD': [], 'TP': [], 'Examens': [], 'Tests': [] },
+    'Statistique': { 'Cours': [], 'TD': [], 'TP': [], 'Examens': [], 'Tests': [] }
+  };
+
+  function showSection(id) {
+    document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+  }
+
+  function selectSubject(subject) {
+    currentSubject = subject;
+    showSection('fileTypes');
+  }
+
+  function showFiles(type) {
+    const container = document.getElementById('fileListContainer');
+    container.innerHTML = '';
+    if(filesData[currentSubject] && filesData[currentSubject][type].length > 0) {
+      filesData[currentSubject][type].forEach(file => {
+        const fileName = file.split('/').pop();
+        const li = document.createElement('li');
+        li.innerHTML = `<a href="${file}" target="_blank">📘 ${fileName}</a>`;
+        container.appendChild(li);
+      });
+    } else {
+      container.innerHTML = '<li>Aucun fichier disponible pour cette catégorie.</li>';
+    }
+    showSection('filesList');
+  }
+</script>
+
+</body>
+</html>
+# ملفات النظام على ويندوز وماك
+.DS_Store
+Thumbs.db
+
+# ملفات مؤقتة
+*.log
+*.tmp
+
+# ملفات التحرير المؤقتة (إذا استخدمت محرر مثل VS Code)
+.vscode/
+*.swp
+
+# أي ملفات أخرى كبيرة أو غير ضرورية
+*.exe
+*.bak
