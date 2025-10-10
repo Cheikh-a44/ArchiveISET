@@ -43,11 +43,6 @@
             background-color: #f8f9fa;
             border-radius: 12px;
             border: 2px dashed #3498db;
-            transition: all 0.3s ease;
-        }
-        .upload-section:hover {
-            border-color: #2980b9;
-            background-color: #e8f4fc;
         }
         .file-input-group {
             margin: 20px 0;
@@ -69,11 +64,6 @@
             border: 2px solid #bdc3c7;
             border-radius: 6px;
             background: white;
-            transition: border-color 0.3s ease;
-        }
-        input[type="file"]:focus {
-            border-color: #3498db;
-            outline: none;
         }
         .buttons {
             display: flex;
@@ -95,21 +85,11 @@
         #btn-process {
             background: linear-gradient(135deg, #27ae60, #2ecc71);
             color: white;
-            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
-        }
-        #btn-process:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
         }
         #btn-download {
             background: linear-gradient(135deg, #2980b9, #3498db);
             color: white;
-            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
             display: none;
-        }
-        #btn-download:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
         }
         .results {
             margin-top: 30px;
@@ -118,7 +98,6 @@
             border-radius: 12px;
             border: 2px solid #ecf0f1;
             display: none;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
         .student-result {
             margin-bottom: 25px;
@@ -126,11 +105,6 @@
             border: 2px solid #ecf0f1;
             border-radius: 10px;
             background-color: #fafbfc;
-            transition: transform 0.2s ease;
-        }
-        .student-result:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
         .status-valid {
             color: #27ae60;
@@ -166,9 +140,6 @@
             border-bottom: 1px solid #ecf0f1;
             background: white;
         }
-        .module-table tr:hover td {
-            background-color: #f8f9fa;
-        }
         .loading {
             display: none;
             text-align: center;
@@ -176,7 +147,6 @@
             background: white;
             border-radius: 10px;
             margin: 20px 0;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
         .spinner {
             border: 4px solid #f3f3f3;
@@ -199,39 +169,15 @@
             margin: 15px 0;
             border-left: 4px solid #e74c3c;
         }
-        .success {
-            color: #27ae60;
-            background-color: #d5f4e6;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 15px 0;
-            border-left: 4px solid #27ae60;
-        }
-        .file-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 8px;
-        }
-        .file-icon {
-            color: #3498db;
-            font-size: 1.2em;
-        }
-        @media (max-width: 768px) {
-            .container {
-                padding: 15px;
-                margin: 10px;
-            }
-            .buttons {
-                flex-direction: column;
-            }
-            button {
-                min-width: auto;
-                width: 100%;
-            }
-            .module-table {
-                font-size: 0.9em;
-            }
+        .debug {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
         }
     </style>
 </head>
@@ -242,33 +188,20 @@
         
         <div class="upload-section">
             <h3>📁 Télécharger les fichiers PDF</h3>
-            <p style="color: #7f8c8d; margin-bottom: 20px;">Veuillez télécharger les fichiers PDF contenant les notes des étudiants</p>
             
             <div class="file-input-group">
                 <label for="exam-file">📝 Fichier PDF des Examens (Obligatoire)</label>
                 <input type="file" id="exam-file" accept=".pdf">
-                <div class="file-info">
-                    <span class="file-icon">ℹ️</span>
-                    <small>Contient les notes d'examen final</small>
-                </div>
             </div>
             
             <div class="file-input-group">
                 <label for="tp-file">🔬 Fichier PDF des TP (Optionnel)</label>
                 <input type="file" id="tp-file" accept=".pdf">
-                <div class="file-info">
-                    <span class="file-icon">ℹ️</span>
-                    <small>Contient les notes de travaux pratiques</small>
-                </div>
             </div>
             
             <div class="file-input-group">
                 <label for="devoir-file">📚 Fichier PDF des Devoirs (Obligatoire)</label>
                 <input type="file" id="devoir-file" accept=".pdf">
-                <div class="file-info">
-                    <span class="file-icon">ℹ️</span>
-                    <small>Contient les notes de devoirs et contrôles continus</small>
-                </div>
             </div>
         </div>
         
@@ -280,15 +213,451 @@
         <div class="loading" id="loading">
             <div class="spinner"></div>
             <p>Traitement des fichiers en cours...</p>
-            <p style="color: #7f8c8d; font-size: 0.9em;">Cette opération peut prendre quelques secondes</p>
         </div>
         
+        <div id="debug-info"></div>
         <div id="results" class="results"></div>
     </div>
 
     <script>
-        // [Le reste من الكود JavaScript يبقى كما هو بدون تغيير]
-        // ... JavaScript code from previous version remains the same ...
+        // Configuration de PDF.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+        // Configuration des matières
+        const SUBJECTS = {
+            'GEM': ['GEM121', 'Électricité et Mecanique', 'Électricité et Mécanique'],
+            'GAB': ['GAB242', 'Génie de l\'agriculture'],
+            'TIC': ['INF121', 'TIC'],
+            'PPV': ['PPV121', 'Bases de Production Végétale'],
+            'PSA': ['PSA231', 'Elements de Production animale'],
+            'STA': ['STA121', 'Introduction Agro-alimentaire'],
+            'ANG': ['ANG121', 'Anglais 2'],
+            'FRA': ['FRA121', 'Français 2']
+        };
+
+        const MODULES = {
+            'M21': ['ANG', 'FRA'],
+            'M22': ['TIC', 'PPV'],
+            'M23': ['PSA', 'STA'],
+            'M24': ['GEM', 'GAB']
+        };
+
+        const MODULE_NAMES = {
+            'M21': 'Module 21',
+            'M22': 'Module 22', 
+            'M23': 'Module 23',
+            'M24': 'Module 24'
+        };
+
+        let processedData = [];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const examFileInput = document.getElementById('exam-file');
+            const tpFileInput = document.getElementById('tp-file');
+            const devoirFileInput = document.getElementById('devoir-file');
+            const btnProcess = document.getElementById('btn-process');
+            const btnDownload = document.getElementById('btn-download');
+            const resultsDiv = document.getElementById('results');
+            const loadingDiv = document.getElementById('loading');
+            const debugDiv = document.getElementById('debug-info');
+
+            // Fonction pour إضافة رسائل التصحيح
+            function debugLog(message) {
+                console.log(message);
+                debugDiv.innerHTML += `<div class="debug">${message}</div>`;
+            }
+
+            btnProcess.addEventListener('click', processFiles);
+            btnDownload.addEventListener('click', downloadPDF);
+
+            async function processFiles() {
+                const examFile = examFileInput.files[0];
+                const tpFile = tpFileInput.files[0];
+                const devoirFile = devoirFileInput.files[0];
+
+                if (!examFile || !devoirFile) {
+                    alert('Veuillez télécharger au moins les fichiers d\'Examen et Devoir.');
+                    return;
+                }
+
+                debugDiv.innerHTML = '';
+                loadingDiv.style.display = 'block';
+                resultsDiv.style.display = 'none';
+                btnDownload.style.display = 'none';
+
+                try {
+                    debugLog('Début du traitement...');
+                    
+                    // استخراج البيانات من الملفات
+                    const examData = await extractDataFromPDF(examFile, 'exam');
+                    debugLog('Données d\'examen extraites: ' + Object.keys(examData).length + ' étudiants');
+                    
+                    const tpData = tpFile ? await extractDataFromPDF(tpFile, 'tp') : {};
+                    if (tpFile) debugLog('Données de TP extraites: ' + Object.keys(tpData).length + ' étudiants');
+                    
+                    const devoirData = await extractDataFromPDF(devoirFile, 'devoir');
+                    debugLog('Données de devoir extraites: ' + Object.keys(devoirData).length + ' étudiants');
+
+                    // معالجة البيانات
+                    processedData = calculateResults(examData, tpData, devoirData);
+                    debugLog('Calculs terminés: ' + processedData.length + ' étudiants traités');
+                    
+                    // عرض النتائج
+                    displayResults(processedData);
+                    
+                    loadingDiv.style.display = 'none';
+                    resultsDiv.style.display = 'block';
+                    btnDownload.style.display = 'inline-block';
+
+                } catch (error) {
+                    loadingDiv.style.display = 'none';
+                    debugLog('ERREUR: ' + error.message);
+                    resultsDiv.innerHTML = `<div class="error">Erreur lors du traitement: ${error.message}</div>`;
+                    resultsDiv.style.display = 'block';
+                }
+            }
+
+            async function extractDataFromPDF(file, type) {
+                return new Promise((resolve, reject) => {
+                    const fileReader = new FileReader();
+                    
+                    fileReader.onload = async function() {
+                        try {
+                            debugLog(`Extraction depuis ${file.name} (type: ${type})`);
+                            const typedArray = new Uint8Array(this.result);
+                            const pdf = await pdfjsLib.getDocument(typedArray).promise;
+                            let fullText = '';
+
+                            for (let i = 1; i <= pdf.numPages; i++) {
+                                const page = await pdf.getPage(i);
+                                const textContent = await page.getTextContent();
+                                const pageText = textContent.items.map(item => item.str).join(' ');
+                                fullText += pageText + '\n';
+                            }
+
+                            const extractedData = parsePDFText(fullText, type);
+                            debugLog(`Données extraites: ${Object.keys(extractedData).length} étudiants trouvés`);
+                            resolve(extractedData);
+                        } catch (error) {
+                            reject(error);
+                        }
+                    };
+
+                    fileReader.onerror = function() {
+                        reject(new Error('Erreur de lecture du fichier'));
+                    };
+
+                    fileReader.readAsArrayBuffer(file);
+                });
+            }
+
+            function parsePDFText(text, type) {
+                const data = {};
+                const lines = text.split('\n');
+                let currentStudent = null;
+
+                debugLog(`Analyse de ${lines.length} lignes...`);
+
+                lines.forEach((line, index) => {
+                    line = line.trim();
+                    
+                    // تجاهل Stage S2
+                    if (line.includes('Stage S2') || line.includes('TC251')) {
+                        return;
+                    }
+
+                    // البحث عن أرقام الطلاب (7-8 أرقام)
+                    const studentIdMatch = line.match(/(\d{7,8})/);
+                    if (studentIdMatch && !currentStudent) {
+                        const studentId = studentIdMatch[1];
+                        // البحث عن اسم الطالب في الأسطر التالية
+                        let studentName = 'Étudiant ' + studentId;
+                        for (let i = index + 1; i < Math.min(index + 5, lines.length); i++) {
+                            const nameLine = lines[i].trim();
+                            if (nameLine && !nameLine.match(/\d{7,8}/) && !nameLine.match(/Moyenne/)) {
+                                studentName = nameLine;
+                                break;
+                            }
+                        }
+                        
+                        currentStudent = {
+                            id: studentId,
+                            name: studentName,
+                            subjects: {}
+                        };
+                        data[studentId] = currentStudent;
+                        debugLog(`Étudiant trouvé: ${studentId} - ${studentName}`);
+                        return;
+                    }
+
+                    // البحث عن المواد والدرجات
+                    if (currentStudent) {
+                        for (const [subjectCode, patterns] of Object.entries(SUBJECTS)) {
+                            for (const pattern of patterns) {
+                                if (line.includes(pattern)) {
+                                    const note = extractNoteFromLine(line);
+                                    if (note !== null) {
+                                        if (!currentStudent.subjects[subjectCode]) {
+                                            currentStudent.subjects[subjectCode] = {};
+                                        }
+                                        currentStudent.subjects[subjectCode][type] = note;
+                                        debugLog(`Note ${type} pour ${subjectCode}: ${note}`);
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                });
+
+                return data;
+            }
+
+            function extractNoteFromLine(line) {
+                // البحث عن الأرقام العشرية
+                const noteMatches = line.match(/(\d{1,2}[,.]\d{1,2})/g);
+                if (noteMatches && noteMatches.length > 0) {
+                    // أخذ آخر رقم (عادةً الأكثر صلة)
+                    const noteStr = noteMatches[noteMatches.length - 1].replace(',', '.');
+                    const note = parseFloat(noteStr);
+                    return isNaN(note) ? null : note;
+                }
+                
+                // البحث عن الأرقام الصحيحة
+                const intMatches = line.match(/\b(\d{1,2})\b/g);
+                if (intMatches && intMatches.length > 0) {
+                    const note = parseInt(intMatches[intMatches.length - 1]);
+                    return isNaN(note) ? null : note;
+                }
+                
+                return null;
+            }
+
+            function calculateResults(examData, tpData, devoirData) {
+                const results = [];
+                const allStudentIds = new Set([
+                    ...Object.keys(examData),
+                    ...Object.keys(tpData),
+                    ...Object.keys(devoirData)
+                ]);
+
+                debugLog(`Calcul pour ${allStudentIds.size} étudiants`);
+
+                allStudentIds.forEach(studentId => {
+                    const studentExam = examData[studentId];
+                    const studentTp = tpData[studentId];
+                    const studentDevoir = devoirData[studentId];
+
+                    if (!studentExam) {
+                        debugLog(`Étudiant ${studentId} non trouvé dans les données d'examen`);
+                        return;
+                    }
+
+                    const student = {
+                        id: studentId,
+                        name: studentExam.name,
+                        subjects: {},
+                        modules: {},
+                        moyenneGenerale: 0
+                    };
+
+                    let totalMatiere = 0;
+                    let countMatiere = 0;
+
+                    // حساب المعدلات للمواد
+                    Object.keys(SUBJECTS).forEach(subjectCode => {
+                        const exam = studentExam.subjects?.[subjectCode]?.exam;
+                        const tp = studentTp?.subjects?.[subjectCode]?.tp;
+                        const devoir = studentDevoir?.subjects?.[subjectCode]?.devoir;
+
+                        if (exam !== undefined && devoir !== undefined) {
+                            let moyenne;
+                            if (tp !== undefined) {
+                                moyenne = (tp * 1 + devoir * 2 + exam * 3) / 6;
+                            } else {
+                                moyenne = (devoir * 2 + exam * 3) / 5;
+                            }
+
+                            const status = moyenne >= 7 ? 'C' : 'NC';
+
+                            student.subjects[subjectCode] = {
+                                exam,
+                                tp,
+                                devoir,
+                                moyenne,
+                                status
+                            };
+
+                            totalMatiere += moyenne;
+                            countMatiere++;
+                        }
+                    });
+
+                    // حساب المعدل العام
+                    if (countMatiere > 0) {
+                        student.moyenneGenerale = totalMatiere / countMatiere;
+                    }
+
+                    // حساب الوحدات
+                    Object.keys(MODULES).forEach(moduleCode => {
+                        const [subject1, subject2] = MODULES[moduleCode];
+                        const subj1 = student.subjects[subject1];
+                        const subj2 = student.subjects[subject2];
+
+                        if (subj1 && subj2) {
+                            const moyenneModule = (subj1.moyenne + subj2.moyenne) / 2;
+                            let statusModule = 'V';
+                            
+                            if (moyenneModule < 10 || subj1.status === 'NC' || subj2.status === 'NC') {
+                                statusModule = 'NV';
+                            }
+
+                            student.modules[moduleCode] = {
+                                moyenne: moyenneModule,
+                                status: statusModule
+                            };
+                        }
+                    });
+
+                    results.push(student);
+                });
+
+                return results;
+            }
+
+            function displayResults(data) {
+                resultsDiv.innerHTML = '';
+
+                if (data.length === 0) {
+                    resultsDiv.innerHTML = '<div class="error">Aucune donnée trouvée. Vérifiez le format des fichiers PDF.</div>';
+                    return;
+                }
+
+                data.forEach(student => {
+                    const studentDiv = document.createElement('div');
+                    studentDiv.className = 'student-result';
+                    
+                    let html = `
+                        <h3>${student.name} (ID: ${student.id})</h3>
+                        <p><strong>Moyenne Semestre:</strong> ${student.moyenneGenerale.toFixed(2)}</p>
+                        
+                        <h4>Modules:</h4>
+                        <table class="module-table">
+                            <thead>
+                                <tr>
+                                    <th>Module</th>
+                                    <th>Nom</th>
+                                    <th>Moyenne</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+
+                    Object.keys(MODULES).forEach(moduleCode => {
+                        const module = student.modules[moduleCode];
+                        if (module) {
+                            const statusClass = module.status === 'V' ? 'status-valid' : 'status-non-valid';
+                            html += `
+                                <tr>
+                                    <td>${moduleCode}</td>
+                                    <td>${MODULE_NAMES[moduleCode]}</td>
+                                    <td>${module.moyenne.toFixed(2)}</td>
+                                    <td class="${statusClass}">${module.status}</td>
+                                </tr>
+                            `;
+                        }
+                    });
+
+                    html += `
+                            </tbody>
+                        </table>
+                        
+                        <h4>Détail des Matières:</h4>
+                        <table class="module-table">
+                            <thead>
+                                <tr>
+                                    <th>Matière</th>
+                                    <th>TP</th>
+                                    <th>Devoir</th>
+                                    <th>Examen</th>
+                                    <th>Moyenne</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+
+                    Object.keys(student.subjects).forEach(subjectCode => {
+                        const subject = student.subjects[subjectCode];
+                        const statusClass = subject.status === 'C' ? 'status-valid' : 'status-non-valid';
+                        html += `
+                            <tr>
+                                <td>${SUBJECTS[subjectCode][1]}</td>
+                                <td>${subject.tp !== undefined ? subject.tp.toFixed(2) : '-'}</td>
+                                <td>${subject.devoir.toFixed(2)}</td>
+                                <td>${subject.exam.toFixed(2)}</td>
+                                <td>${subject.moyenne.toFixed(2)}</td>
+                                <td class="${statusClass}">${subject.status}</td>
+                            </tr>
+                        `;
+                    });
+
+                    html += `</tbody></table>`;
+                    studentDiv.innerHTML = html;
+                    resultsDiv.appendChild(studentDiv);
+                });
+            }
+
+            function downloadPDF() {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+
+                processedData.forEach((student, index) => {
+                    if (index > 0) {
+                        doc.addPage();
+                    }
+
+                    doc.setFontSize(16);
+                    doc.text(`Rapport des Notes - ${student.name}`, 20, 20);
+                    doc.setFontSize(12);
+                    doc.text(`ID: ${student.id}`, 20, 30);
+                    doc.text(`Moyenne Semestre: ${student.moyenneGenerale.toFixed(2)}`, 20, 40);
+
+                    let y = 60;
+                    doc.text('Modules:', 20, y);
+                    y += 10;
+                    
+                    doc.setFontSize(10);
+                    Object.keys(MODULES).forEach(moduleCode => {
+                        const module = student.modules[moduleCode];
+                        if (module) {
+                            const status = module.status === 'V' ? 'Validé' : 'Non Validé';
+                            doc.text(`${moduleCode} (${MODULE_NAMES[moduleCode]}): ${module.moyenne.toFixed(2)} - ${status}`, 25, y);
+                            y += 7;
+                        }
+                    });
+
+                    y += 10;
+                    doc.text('Détail des Matières:', 20, y);
+                    y += 10;
+
+                    Object.keys(student.subjects).forEach(subjectCode => {
+                        const subject = student.subjects[subjectCode];
+                        const status = subject.status === 'C' ? 'C' : 'NC';
+                        
+                        doc.text(`${SUBJECTS[subjectCode][1]}: TP ${subject.tp !== undefined ? subject.tp.toFixed(2) : '-'} | 
+                                Devoir ${subject.devoir.toFixed(2)} | 
+                                Exam ${subject.exam.toFixed(2)} | 
+                                Moy ${subject.moyenne.toFixed(2)} | 
+                                ${status}`, 25, y);
+                        y += 7;
+                    });
+                });
+
+                doc.save('rapport_moyennes.pdf');
+            }
+        });
     </script>
 </body>
 </html>
