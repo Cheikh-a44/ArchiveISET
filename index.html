@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Système de Calcul des Moyennes - ENSTA</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         * {
@@ -18,7 +17,7 @@
             min-height: 100vh;
         }
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             background-color: white;
             padding: 30px;
@@ -30,18 +29,20 @@
             color: #2c3e50;
             margin-bottom: 10px;
         }
-        .upload-section {
-            margin: 30px 0;
-            padding: 25px;
-            background-color: #f8f9fa;
-            border-radius: 12px;
-            border: 2px dashed #3498db;
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 30px;
         }
-        .file-input-group {
-            margin: 20px 0;
-            padding: 15px;
-            background: white;
-            border-radius: 8px;
+        .student-form {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border: 2px solid #3498db;
+        }
+        .form-group {
+            margin-bottom: 20px;
         }
         label {
             display: block;
@@ -49,11 +50,53 @@
             font-weight: 600;
             color: #2c3e50;
         }
-        input[type="file"] {
+        input[type="text"], input[type="number"] {
             width: 100%;
             padding: 12px;
             border: 2px solid #bdc3c7;
             border-radius: 6px;
+            font-size: 16px;
+        }
+        .subjects-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 1px;
+            background: #ddd;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        .grid-header {
+            background: #34495e;
+            color: white;
+            padding: 15px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .subject-row {
+            display: contents;
+        }
+        .subject-name {
+            background: white;
+            padding: 12px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+        }
+        .subject-input {
+            background: white;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .subject-input input {
+            width: 90%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
         }
         .buttons {
             display: flex;
@@ -70,114 +113,228 @@
             font-weight: bold;
             font-size: 16px;
             min-width: 180px;
+            transition: all 0.3s ease;
         }
-        #btn-process {
+        #btn-add {
             background: #27ae60;
             color: white;
         }
-        #btn-download {
+        #btn-calculate {
+            background: #e67e22;
+            color: white;
+        }
+        #btn-pdf {
             background: #2980b9;
             color: white;
             display: none;
         }
-        .results {
+        .students-list {
             margin-top: 30px;
-            padding: 25px;
-            background-color: white;
-            border-radius: 12px;
-            border: 2px solid #ecf0f1;
-            display: none;
         }
-        .student-result {
-            margin-bottom: 25px;
+        .student-card {
+            background: white;
+            border: 2px solid #ecf0f1;
+            border-radius: 10px;
             padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            background: #fafbfc;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .student-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        .student-name {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .student-id {
+            color: #7f8c8d;
+            font-weight: 500;
         }
         .status-valid {
             color: #27ae60;
             font-weight: bold;
+            background: #d5f4e6;
+            padding: 4px 12px;
+            border-radius: 20px;
         }
         .status-non-valid {
             color: #e74c3c;
             font-weight: bold;
+            background: #fadbd8;
+            padding: 4px 12px;
+            border-radius: 20px;
         }
-        table {
+        .status-C {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        .status-NC {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .results-table {
             width: 100%;
             border-collapse: collapse;
-            margin: 10px 0;
+            margin: 15px 0;
         }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background-color: #34495e;
+        .results-table th {
+            background: #34495e;
             color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
         }
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 20px;
+        .results-table td {
+            padding: 12px;
+            border-bottom: 1px solid #ecf0f1;
         }
-        .error {
-            color: #e74c3c;
-            background-color: #fadbd8;
+        .results-table tr:hover td {
+            background: #f8f9fa;
+        }
+        .module-section {
+            background: #f8f9fa;
             padding: 15px;
             border-radius: 8px;
-            margin: 15px 0;
+            margin: 10px 0;
+        }
+        .delete-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .moyenne-generale {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2c3e50;
+            text-align: center;
+            padding: 10px;
+            background: #e8f4fc;
+            border-radius: 8px;
+            margin: 10px 0;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🎓 Système de Calcul des Moyennes</h1>
-        <p style="text-align: center; color: #7f8c8d;">Support complet pour Excel (.xlsx, .xls) et CSV</p>
+        <h1>🎓 Système de Calcul des Moyennes - ENSTA</h1>
+        <div class="subtitle">Saisie manuelle des notes - Génération automatique des résultats</div>
         
-        <div class="upload-section">
-            <h3>📁 Télécharger les fichiers Excel/CSV</h3>
+        <!-- نموذج إدخال الطالب -->
+        <div class="student-form">
+            <h3>📝 Saisie des données de l'étudiant</h3>
             
-            <div class="file-input-group">
-                <label for="exam-file">📝 Fichier des Examens (Excel/CSV)</label>
-                <input type="file" id="exam-file" accept=".csv,.xlsx,.xls">
+            <div class="form-group">
+                <label for="student-name">Nom complet de l'étudiant:</label>
+                <input type="text" id="student-name" placeholder="Ex: Cheikh Ahmedou Mohamed Lemine">
             </div>
             
-            <div class="file-input-group">
-                <label for="tp-file">🔬 Fichier des TP (Excel/CSV - Optionnel)</label>
-                <input type="file" id="tp-file" accept=".csv,.xlsx,.xls">
+            <div class="form-group">
+                <label for="student-id">Numéro d'étudiant (ID):</label>
+                <input type="text" id="student-id" placeholder="Ex: 24001581">
             </div>
             
-            <div class="file-input-group">
-                <label for="devoir-file">📚 Fichier des Devoirs (Excel/CSV)</label>
-                <input type="file" id="devoir-file" accept=".csv,.xlsx,.xls">
+            <h4>📊 Notes des matières:</h4>
+            <div class="subjects-grid">
+                <!-- En-têtes -->
+                <div class="grid-header">Matière</div>
+                <div class="grid-header">TP (opt)</div>
+                <div class="grid-header">Devoir (×2)</div>
+                <div class="grid-header">Examen (×3)</div>
+                
+                <!-- المواد -->
+                <div class="subject-row">
+                    <div class="subject-name">GEM - Électricité et Mécanique</div>
+                    <div class="subject-input"><input type="number" id="GEM-tp" step="0.01" min="0" max="20" placeholder="TP"></div>
+                    <div class="subject-input"><input type="number" id="GEM-devoir" step="0.01" min="0" max="20" placeholder="Devoir" required></div>
+                    <div class="subject-input"><input type="number" id="GEM-exam" step="0.01" min="0" max="20" placeholder="Examen" required></div>
+                </div>
+                
+                <div class="subject-row">
+                    <div class="subject-name">GAB - Génie de l'agriculture</div>
+                    <div class="subject-input"><input type="number" id="GAB-tp" step="0.01" min="0" max="20" placeholder="TP"></div>
+                    <div class="subject-input"><input type="number" id="GAB-devoir" step="0.01" min="0" max="20" placeholder="Devoir" required></div>
+                    <div class="subject-input"><input type="number" id="GAB-exam" step="0.01" min="0" max="20" placeholder="Examen" required></div>
+                </div>
+                
+                <div class="subject-row">
+                    <div class="subject-name">TIC - Informatique</div>
+                    <div class="subject-input"><input type="number" id="TIC-tp" step="0.01" min="0" max="20" placeholder="TP"></div>
+                    <div class="subject-input"><input type="number" id="TIC-devoir" step="0.01" min="0" max="20" placeholder="Devoir" required></div>
+                    <div class="subject-input"><input type="number" id="TIC-exam" step="0.01" min="0" max="20" placeholder="Examen" required></div>
+                </div>
+                
+                <div class="subject-row">
+                    <div class="subject-name">PPV - Bases de Production Végétale</div>
+                    <div class="subject-input"><input type="number" id="PPV-tp" step="0.01" min="0" max="20" placeholder="TP"></div>
+                    <div class="subject-input"><input type="number" id="PPV-devoir" step="0.01" min="0" max="20" placeholder="Devoir" required></div>
+                    <div class="subject-input"><input type="number" id="PPV-exam" step="0.01" min="0" max="20" placeholder="Examen" required></div>
+                </div>
+                
+                <div class="subject-row">
+                    <div class="subject-name">PSA - Éléments de Production animale</div>
+                    <div class="subject-input"><input type="number" id="PSA-tp" step="0.01" min="0" max="20" placeholder="TP"></div>
+                    <div class="subject-input"><input type="number" id="PSA-devoir" step="0.01" min="0" max="20" placeholder="Devoir" required></div>
+                    <div class="subject-input"><input type="number" id="PSA-exam" step="0.01" min="0" max="20" placeholder="Examen" required></div>
+                </div>
+                
+                <div class="subject-row">
+                    <div class="subject-name">STA - Introduction Agro-alimentaire</div>
+                    <div class="subject-input"><input type="number" id="STA-tp" step="0.01" min="0" max="20" placeholder="TP"></div>
+                    <div class="subject-input"><input type="number" id="STA-devoir" step="0.01" min="0" max="20" placeholder="Devoir" required></div>
+                    <div class="subject-input"><input type="number" id="STA-exam" step="0.01" min="0" max="20" placeholder="Examen" required></div>
+                </div>
+                
+                <div class="subject-row">
+                    <div class="subject-name">ANG - Anglais 2</div>
+                    <div class="subject-input"><input type="number" id="ANG-tp" step="0.01" min="0" max="20" placeholder="TP"></div>
+                    <div class="subject-input"><input type="number" id="ANG-devoir" step="0.01" min="0" max="20" placeholder="Devoir" required></div>
+                    <div class="subject-input"><input type="number" id="ANG-exam" step="0.01" min="0" max="20" placeholder="Examen" required></div>
+                </div>
+                
+                <div class="subject-row">
+                    <div class="subject-name">FRA - Français 2</div>
+                    <div class="subject-input"><input type="number" id="FRA-tp" step="0.01" min="0" max="20" placeholder="TP"></div>
+                    <div class="subject-input"><input type="number" id="FRA-devoir" step="0.01" min="0" max="20" placeholder="Devoir" required></div>
+                    <div class="subject-input"><input type="number" id="FRA-exam" step="0.01" min="0" max="20" placeholder="Examen" required></div>
+                </div>
+            </div>
+            
+            <div class="buttons">
+                <button id="btn-add">➕ Ajouter l'étudiant</button>
+                <button id="btn-calculate">🧮 Calculer toutes les moyennes</button>
+                <button id="btn-pdf">📥 Générer PDF</button>
             </div>
         </div>
         
-        <div class="buttons">
-            <button id="btn-process">🚀 Traiter les Fichiers</button>
-            <button id="btn-download">📥 Télécharger Rapport PDF</button>
+        <!-- قائمة الطلاب والنتائج -->
+        <div id="students-list" class="students-list">
+            <!-- سيتم عرض الطلاب هنا -->
         </div>
-        
-        <div class="loading" id="loading">
-            Traitement en cours...
-        </div>
-        
-        <div id="results" class="results"></div>
     </div>
 
     <script>
+        const { jsPDF } = window.jspdf;
+        
         // تعريف المواد والوحدات
         const SUBJECTS = {
-            'GEM': ['GEM121', 'Électricité et Mecanique', 'Électricité et Mécanique'],
-            'GAB': ['GAB242', 'Génie de l\'agriculture'],
-            'TIC': ['INF121', 'TIC'],
-            'PPV': ['PPV121', 'Bases de Production Végétale'],
-            'PSA': ['PSA231', 'Elements de Production animale'],
-            'STA': ['STA121', 'Introduction Agro-alimentaire'],
-            'ANG': ['ANG121', 'Anglais 2'],
-            'FRA': ['FRA121', 'Français 2']
+            'GEM': 'Électricité et Mécanique',
+            'GAB': 'Génie de l\'agriculture', 
+            'TIC': 'TIC',
+            'PPV': 'Bases de Production Végétale',
+            'PSA': 'Éléments de Production animale',
+            'STA': 'Introduction Agro-alimentaire',
+            'ANG': 'Anglais 2',
+            'FRA': 'Français 2'
         };
 
         const MODULES = {
@@ -187,372 +344,319 @@
             'M24': ['GEM', 'GAB']
         };
 
-        let processedData = [];
+        const MODULE_NAMES = {
+            'M21': 'Module 21',
+            'M22': 'Module 22',
+            'M23': 'Module 23', 
+            'M24': 'Module 24'
+        };
+
+        let students = [];
 
         document.addEventListener('DOMContentLoaded', function() {
-            const btnProcess = document.getElementById('btn-process');
-            const btnDownload = document.getElementById('btn-download');
-            const resultsDiv = document.getElementById('results');
-            const loadingDiv = document.getElementById('loading');
+            const btnAdd = document.getElementById('btn-add');
+            const btnCalculate = document.getElementById('btn-calculate');
+            const btnPDF = document.getElementById('btn-pdf');
+            const studentsList = document.getElementById('students-list');
 
-            btnProcess.addEventListener('click', processFiles);
-            btnDownload.addEventListener('click', downloadPDF);
+            btnAdd.addEventListener('click', addStudent);
+            btnCalculate.addEventListener('click', calculateAll);
+            btnPDF.addEventListener('click', generatePDF);
 
-            async function processFiles() {
-                const examFile = document.getElementById('exam-file').files[0];
-                const tpFile = document.getElementById('tp-file').files[0];
-                const devoirFile = document.getElementById('devoir-file').files[0];
-
-                if (!examFile || !devoirFile) {
-                    alert('Veuillez télécharger au moins les fichiers d\'Examen et Devoir.');
+            function addStudent() {
+                const name = document.getElementById('student-name').value.trim();
+                const id = document.getElementById('student-id').value.trim();
+                
+                if (!name || !id) {
+                    alert('Veuillez remplir le nom et l\'ID de l\'étudiant');
                     return;
                 }
 
-                loadingDiv.style.display = 'block';
-                resultsDiv.style.display = 'none';
-                btnDownload.style.display = 'none';
+                // جمع بيانات المواد
+                const subjects = {};
+                let hasData = false;
 
-                try {
-                    // قراءة الملفات
-                    const examData = await readFile(examFile, 'exam');
-                    const tpData = tpFile ? await readFile(tpFile, 'tp') : {};
-                    const devoirData = await readFile(devoirFile, 'devoir');
+                Object.keys(SUBJECTS).forEach(subjectCode => {
+                    const tp = document.getElementById(`${subjectCode}-tp`).value;
+                    const devoir = document.getElementById(`${subjectCode}-devoir`).value;
+                    const exam = document.getElementById(`${subjectCode}-exam`).value;
 
-                    // معالجة البيانات
-                    processedData = calculateResults(examData, tpData, devoirData);
-                    
-                    // عرض النتائج
-                    displayResults(processedData);
-                    
-                    loadingDiv.style.display = 'none';
-                    resultsDiv.style.display = 'block';
-                    btnDownload.style.display = 'inline-block';
+                    if (devoir && exam) {
+                        subjects[subjectCode] = {
+                            tp: tp ? parseFloat(tp) : undefined,
+                            devoir: parseFloat(devoir),
+                            exam: parseFloat(exam)
+                        };
+                        hasData = true;
+                    }
+                });
 
-                } catch (error) {
-                    loadingDiv.style.display = 'none';
-                    resultsDiv.innerHTML = `<div class="error">Erreur: ${error.message}</div>`;
-                    resultsDiv.style.display = 'block';
-                    console.error(error);
+                if (!hasData) {
+                    alert('Veuillez saisir au moins les notes de devoir et examen pour une matière');
+                    return;
                 }
+
+                const student = {
+                    id,
+                    name,
+                    subjects,
+                    calculated: false
+                };
+
+                students.push(student);
+                displayStudents();
+                clearForm();
             }
 
-            function readFile(file, type) {
-                return new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    
-                    reader.onload = function(e) {
-                        try {
-                            let parsedData = {};
-                            
-                            if (file.name.endsWith('.csv')) {
-                                // معالجة CSV
-                                const csvText = e.target.result;
-                                const workbook = XLSX.read(csvText, { type: 'string' });
-                                parsedData = parseExcelData(workbook, type);
-                            } else {
-                                // معالجة Excel
-                                const arrayBuffer = e.target.result;
-                                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-                                parsedData = parseExcelData(workbook, type);
-                            }
-                            
-                            resolve(parsedData);
-                        } catch (error) {
-                            reject(error);
-                        }
-                    };
-                    
-                    reader.onerror = () => reject(new Error('Erreur de lecture du fichier'));
-                    
-                    if (file.name.endsWith('.csv')) {
-                        reader.readAsText(file);
+            function calculateAll() {
+                students.forEach(student => {
+                    if (!student.calculated) {
+                        calculateStudentResults(student);
+                    }
+                });
+                displayStudents();
+                btnPDF.style.display = 'inline-block';
+            }
+
+            function calculateStudentResults(student) {
+                let totalMatiere = 0;
+                let countMatiere = 0;
+
+                // حساب معدلات المواد
+                Object.keys(student.subjects).forEach(subjectCode => {
+                    const subject = student.subjects[subjectCode];
+                    let moyenne;
+
+                    if (subject.tp !== undefined) {
+                        moyenne = (subject.tp * 1 + subject.devoir * 2 + subject.exam * 3) / 6;
                     } else {
-                        reader.readAsArrayBuffer(file);
+                        moyenne = (subject.devoir * 2 + subject.exam * 3) / 5;
                     }
-                });
-            }
 
-            function parseExcelData(workbook, type) {
-                const students = {};
-                
-                // معالجة كل ورقة في الملف
-                workbook.SheetNames.forEach(sheetName => {
-                    const worksheet = workbook.Sheets[sheetName];
-                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    const status = moyenne >= 7 ? 'C' : 'NC';
                     
-                    jsonData.forEach((row, rowIndex) => {
-                        // البحث عن أرقام الطلاب وأسمائهم
-                        row.forEach((cell, colIndex) => {
-                            if (cell && typeof cell === 'string') {
-                                // البحث عن أرقام الطلاب (7-8 أرقام)
-                                const idMatch = cell.match(/(\d{7,8})/);
-                                if (idMatch) {
-                                    const studentId = idMatch[1];
-                                    let studentName = 'Étudiant ' + studentId;
-                                    
-                                    // البحث عن الاسم في الصفوف المجاورة
-                                    for (let i = Math.max(0, rowIndex - 2); i <= Math.min(rowIndex + 2, jsonData.length - 1); i++) {
-                                        const nameRow = jsonData[i];
-                                        if (nameRow && nameRow[colIndex] && typeof nameRow[colIndex] === 'string') {
-                                            const nameCell = nameRow[colIndex];
-                                            if (nameCell.length > 3 && !nameCell.match(/^\d/) && 
-                                                !nameCell.match(/moyenne|note|exam|module|id|nom|name/i)) {
-                                                studentName = nameCell;
-                                                break;
-                                            }
-                                        }
-                                    }
-                                    
-                                    if (!students[studentId]) {
-                                        students[studentId] = {
-                                            id: studentId,
-                                            name: studentName,
-                                            subjects: {}
-                                        };
-                                    }
-                                    
-                                    // البحث عن درجات المواد في الصفوف المجاورة
-                                    Object.entries(SUBJECTS).forEach(([subjectCode, patterns]) => {
-                                        patterns.forEach(pattern => {
-                                            // البحث في الأعمدة المجاورة
-                                            for (let c = Math.max(0, colIndex - 3); c <= Math.min(colIndex + 3, row.length - 1); c++) {
-                                                const headerCell = row[c];
-                                                if (headerCell && typeof headerCell === 'string' && 
-                                                    headerCell.toLowerCase().includes(pattern.toLowerCase())) {
-                                                    
-                                                    // البحث عن القيمة في الصفوف التالية
-                                                    for (let r = rowIndex + 1; r < Math.min(rowIndex + 10, jsonData.length); r++) {
-                                                        const valueRow = jsonData[r];
-                                                        if (valueRow && valueRow[c] !== undefined) {
-                                                            const note = parseFloat(valueRow[c]);
-                                                            if (!isNaN(note)) {
-                                                                if (!students[studentId].subjects[subjectCode]) {
-                                                                    students[studentId].subjects[subjectCode] = {};
-                                                                }
-                                                                students[studentId].subjects[subjectCode][type] = note;
-                                                                break;
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        });
-                                    });
-                                }
-                            }
-                        });
-                    });
+                    student.subjects[subjectCode].moyenne = moyenne;
+                    student.subjects[subjectCode].status = status;
+
+                    totalMatiere += moyenne;
+                    countMatiere++;
                 });
-                
-                return students;
-            }
 
-            function calculateResults(examData, tpData, devoirData) {
-                const results = [];
-                const allStudentIds = new Set([
-                    ...Object.keys(examData),
-                    ...Object.keys(tpData), 
-                    ...Object.keys(devoirData)
-                ]);
+                // المعدل العام
+                student.moyenneGenerale = countMatiere > 0 ? totalMatiere / countMatiere : 0;
+                student.statusSemestre = student.moyenneGenerale >= 10 ? 'Validé' : 'Non Validé';
 
-                allStudentIds.forEach(studentId => {
-                    const studentExam = examData[studentId];
-                    const studentTp = tpData[studentId];
-                    const studentDevoir = devoirData[studentId];
+                // حساب الوحدات
+                student.modules = {};
+                Object.keys(MODULES).forEach(moduleCode => {
+                    const [subject1, subject2] = MODULES[moduleCode];
+                    const subj1 = student.subjects[subject1];
+                    const subj2 = student.subjects[subject2];
 
-                    if (!studentExam) return;
-
-                    const student = {
-                        id: studentId,
-                        name: studentExam.name,
-                        subjects: {},
-                        modules: {},
-                        moyenneGenerale: 0
-                    };
-
-                    let totalMatiere = 0;
-                    let countMatiere = 0;
-
-                    // حساب المعدلات للمواد
-                    Object.keys(SUBJECTS).forEach(subjectCode => {
-                        const exam = studentExam.subjects?.[subjectCode]?.exam;
-                        const tp = studentTp?.subjects?.[subjectCode]?.tp;
-                        const devoir = studentDevoir?.subjects?.[subjectCode]?.devoir;
-
-                        if (exam !== undefined && devoir !== undefined) {
-                            let moyenne;
-                            if (tp !== undefined) {
-                                moyenne = (tp * 1 + devoir * 2 + exam * 3) / 6;
-                            } else {
-                                moyenne = (devoir * 2 + exam * 3) / 5;
-                            }
-
-                            const status = moyenne >= 7 ? 'C' : 'NC';
-
-                            student.subjects[subjectCode] = {
-                                exam,
-                                tp,
-                                devoir, 
-                                moyenne,
-                                status
-                            };
-
-                            totalMatiere += moyenne;
-                            countMatiere++;
+                    if (subj1 && subj2) {
+                        const moyenneModule = (subj1.moyenne + subj2.moyenne) / 2;
+                        let statusModule = 'V';
+                        
+                        if (moyenneModule < 10 || subj1.status === 'NC' || subj2.status === 'NC') {
+                            statusModule = 'NV';
                         }
-                    });
 
-                    if (countMatiere > 0) {
-                        student.moyenneGenerale = totalMatiere / countMatiere;
+                        student.modules[moduleCode] = {
+                            moyenne: moyenneModule,
+                            status: statusModule
+                        };
                     }
-
-                    // حساب الوحدات
-                    Object.keys(MODULES).forEach(moduleCode => {
-                        const [subject1, subject2] = MODULES[moduleCode];
-                        const subj1 = student.subjects[subject1];
-                        const subj2 = student.subjects[subject2];
-
-                        if (subj1 && subj2) {
-                            const moyenneModule = (subj1.moyenne + subj2.moyenne) / 2;
-                            let statusModule = 'V';
-                            
-                            if (moyenneModule < 10 || subj1.status === 'NC' || subj2.status === 'NC') {
-                                statusModule = 'NV';
-                            }
-
-                            student.modules[moduleCode] = {
-                                moyenne: moyenneModule,
-                                status: statusModule
-                            };
-                        }
-                    });
-
-                    results.push(student);
                 });
 
-                return results;
+                student.calculated = true;
             }
 
-            function displayResults(data) {
-                resultsDiv.innerHTML = '';
+            function displayStudents() {
+                studentsList.innerHTML = '';
 
-                if (data.length === 0) {
-                    resultsDiv.innerHTML = '<div class="error">Aucune donnée trouvée. Vérifiez le format de vos fichiers Excel.</div>';
+                if (students.length === 0) {
+                    studentsList.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 20px;">Aucun étudiant ajouté</p>';
                     return;
                 }
 
-                data.forEach(student => {
-                    const studentDiv = document.createElement('div');
-                    studentDiv.className = 'student-result';
+                students.forEach((student, index) => {
+                    const studentCard = document.createElement('div');
+                    studentCard.className = 'student-card';
                     
                     let html = `
-                        <h3>${student.name} (ID: ${student.id})</h3>
-                        <p><strong>Moyenne Semestre:</strong> ${student.moyenneGenerale.toFixed(2)}</p>
-                        
-                        <h4>Modules:</h4>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Module</th>
-                                    <th>Moyenne</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
+                        <div class="student-header">
+                            <div>
+                                <span class="student-name">${student.name}</span>
+                                <span class="student-id"> (ID: ${student.id})</span>
+                            </div>
+                            <div>
+                                ${student.calculated ? 
+                                    `<span class="${student.statusSemestre === 'Validé' ? 'status-valid' : 'status-non-valid'}">
+                                        ${student.statusSemestre}
+                                    </span>` : 
+                                    '<span style="color: #f39c12;">⏳ Non calculé</span>'
+                                }
+                                <button class="delete-btn" onclick="deleteStudent(${index})">🗑️</button>
+                            </div>
+                        </div>
                     `;
 
-                    Object.keys(MODULES).forEach(moduleCode => {
-                        const module = student.modules[moduleCode];
-                        if (module) {
-                            const statusClass = module.status === 'V' ? 'status-valid' : 'status-non-valid';
+                    if (student.calculated) {
+                        html += `
+                            <div class="moyenne-generale">
+                                Moyenne Semestre : ${student.moyenneGenerale.toFixed(2)}
+                            </div>
+
+                            <div class="module-section">
+                                <h4>Modules:</h4>
+                                <table class="results-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Module</th>
+                                            <th>Nom</th>
+                                            <th>Moyenne</th>
+                                            <th>Crédits</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                        `;
+
+                        Object.keys(MODULES).forEach(moduleCode => {
+                            const module = student.modules[moduleCode];
+                            if (module) {
+                                const statusClass = module.status === 'V' ? 'status-valid' : 'status-non-valid';
+                                html += `
+                                    <tr>
+                                        <td>${moduleCode}</td>
+                                        <td>${MODULE_NAMES[moduleCode]}</td>
+                                        <td>${module.moyenne.toFixed(2)}</td>
+                                        <td>6.0</td>
+                                        <td class="${statusClass}">${module.status}</td>
+                                    </tr>
+                                `;
+                            }
+                        });
+
+                        html += `
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <h4>Détail des Matières:</h4>
+                            <table class="results-table">
+                                <thead>
+                                    <tr>
+                                        <th>Matière</th>
+                                        <th>TP</th>
+                                        <th>Devoir</th>
+                                        <th>Examen</th>
+                                        <th>Moyenne</th>
+                                        <th>Crédits</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                        `;
+
+                        Object.keys(student.subjects).forEach(subjectCode => {
+                            const subject = student.subjects[subjectCode];
+                            const statusClass = subject.status === 'C' ? 'status-C' : 'status-NC';
                             html += `
                                 <tr>
-                                    <td>${moduleCode}</td>
-                                    <td>${module.moyenne.toFixed(2)}</td>
-                                    <td class="${statusClass}">${module.status}</td>
+                                    <td>${SUBJECTS[subjectCode]}</td>
+                                    <td>${subject.tp !== undefined ? subject.tp.toFixed(2) : '-'}</td>
+                                    <td>${subject.devoir.toFixed(2)}</td>
+                                    <td>${subject.exam.toFixed(2)}</td>
+                                    <td>${subject.moyenne.toFixed(2)}</td>
+                                    <td>3.0</td>
+                                    <td class="${statusClass}">${subject.status}</td>
                                 </tr>
                             `;
-                        }
-                    });
+                        });
 
-                    html += `
-                            </tbody>
-                        </table>
-                        
-                        <h4>Détail des Matières:</h4>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Matière</th>
-                                    <th>TP</th>
-                                    <th>Devoir</th>
-                                    <th>Examen</th>
-                                    <th>Moyenne</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                    `;
+                        html += `</tbody></table>`;
+                    } else {
+                        html += `<p style="color: #7f8c8d; text-align: center;">Cliquez sur "Calculer toutes les moyennes" pour voir les résultats</p>`;
+                    }
 
-                    Object.keys(student.subjects).forEach(subjectCode => {
-                        const subject = student.subjects[subjectCode];
-                        const statusClass = subject.status === 'C' ? 'status-valid' : 'status-non-valid';
-                        html += `
-                            <tr>
-                                <td>${SUBJECTS[subjectCode][1]}</td>
-                                <td>${subject.tp !== undefined ? subject.tp.toFixed(2) : '-'}</td>
-                                <td>${subject.devoir.toFixed(2)}</td>
-                                <td>${subject.exam.toFixed(2)}</td>
-                                <td>${subject.moyenne.toFixed(2)}</td>
-                                <td class="${statusClass}">${subject.status}</td>
-                            </tr>
-                        `;
-                    });
-
-                    html += `</tbody></table>`;
-                    studentDiv.innerHTML = html;
-                    resultsDiv.appendChild(studentDiv);
+                    studentCard.innerHTML = html;
+                    studentsList.appendChild(studentCard);
                 });
             }
 
-            function downloadPDF() {
-                const { jsPDF } = window.jspdf;
+            function clearForm() {
+                document.getElementById('student-name').value = '';
+                document.getElementById('student-id').value = '';
+                
+                Object.keys(SUBJECTS).forEach(subjectCode => {
+                    document.getElementById(`${subjectCode}-tp`).value = '';
+                    document.getElementById(`${subjectCode}-devoir`).value = '';
+                    document.getElementById(`${subjectCode}-exam`).value = '';
+                });
+            }
+
+            function generatePDF() {
                 const doc = new jsPDF();
+                const calculatedStudents = students.filter(s => s.calculated);
 
-                processedData.forEach((student, index) => {
-                    if (index > 0) doc.addPage();
+                if (calculatedStudents.length === 0) {
+                    alert('Aucun étudiant calculé. Veuillez d\'abord calculer les moyennes.');
+                    return;
+                }
 
+                calculatedStudents.forEach((student, index) => {
+                    if (index > 0) {
+                        doc.addPage();
+                    }
+
+                    // En-tête
                     doc.setFontSize(16);
                     doc.text(`Rapport des Notes - ${student.name}`, 20, 20);
                     doc.setFontSize(12);
                     doc.text(`ID: ${student.id}`, 20, 30);
-                    doc.text(`Moyenne Semestre: ${student.moyenneGenerale.toFixed(2)}`, 20, 40);
+                    doc.text(`Moyenne Semestre: ${student.moyenneGenerale.toFixed(2)} - ${student.statusSemestre}`, 20, 40);
 
+                    // الوحدات
                     let y = 60;
+                    doc.setFontSize(14);
                     doc.text('Modules:', 20, y);
                     y += 10;
                     
+                    doc.setFontSize(10);
                     Object.keys(MODULES).forEach(moduleCode => {
                         const module = student.modules[moduleCode];
                         if (module) {
-                            doc.text(`${moduleCode}: ${module.moyenne.toFixed(2)} - ${module.status}`, 25, y);
+                            doc.text(`${moduleCode} ${MODULE_NAMES[moduleCode]} ${module.moyenne.toFixed(2)} 6.0 ${module.status}`, 25, y);
                             y += 7;
                         }
                     });
 
+                    // المواد
                     y += 10;
-                    doc.text('Matières:', 20, y);
+                    doc.setFontSize(14);
+                    doc.text('Détail des Matières:', 20, y);
                     y += 10;
-
+                    
+                    doc.setFontSize(9);
                     Object.keys(student.subjects).forEach(subjectCode => {
                         const subject = student.subjects[subjectCode];
-                        doc.text(`${SUBJECTS[subjectCode][1]}: ${subject.moyenne.toFixed(2)} - ${subject.status}`, 25, y);
-                        y += 7;
+                        const line = `${SUBJECTS[subjectCode]} ${subject.tp !== undefined ? subject.tp.toFixed(2) : '-'} ${subject.devoir.toFixed(2)} ${subject.exam.toFixed(2)} ${subject.moyenne.toFixed(2)} 3.0 ${subject.status}`;
+                        doc.text(line, 25, y);
+                        y += 6;
                     });
                 });
 
-                doc.save('rapport_moyennes.pdf');
+                doc.save('rapport_moyennes_ENSTA.pdf');
             }
+
+            // دالة حذف الطالب (يجب أن تكون عامة)
+            window.deleteStudent = function(index) {
+                if (confirm('Voulez-vous vraiment supprimer cet étudiant?')) {
+                    students.splice(index, 1);
+                    displayStudents();
+                }
+            };
         });
     </script>
 </body>
