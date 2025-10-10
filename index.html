@@ -122,6 +122,13 @@
             text-align: center;
             padding: 20px;
         }
+        .error {
+            color: #e74c3c;
+            background-color: #fadbd8;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
     </style>
 </head>
 <body>
@@ -203,6 +210,7 @@
 
                 loadingDiv.style.display = 'block';
                 resultsDiv.style.display = 'none';
+                btnDownload.style.display = 'none';
 
                 try {
                     // قراءة الملفات
@@ -222,7 +230,8 @@
 
                 } catch (error) {
                     loadingDiv.style.display = 'none';
-                    alert('Erreur: ' + error.message);
+                    resultsDiv.innerHTML = `<div class="error">Erreur: ${error.message}</div>`;
+                    resultsDiv.style.display = 'block';
                     console.error(error);
                 }
             }
@@ -233,27 +242,27 @@
                     
                     reader.onload = function(e) {
                         try {
-                            let data = {};
+                            let parsedData = {};
                             
                             if (file.name.endsWith('.csv')) {
                                 // معالجة CSV
                                 const csvText = e.target.result;
                                 const workbook = XLSX.read(csvText, { type: 'string' });
-                                data = parseExcelData(workbook, type);
+                                parsedData = parseExcelData(workbook, type);
                             } else {
                                 // معالجة Excel
-                                const data = new Uint8Array(e.target.result);
-                                const workbook = XLSX.read(data, { type: 'array' });
-                                data = parseExcelData(workbook, type);
+                                const arrayBuffer = e.target.result;
+                                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                                parsedData = parseExcelData(workbook, type);
                             }
                             
-                            resolve(data);
+                            resolve(parsedData);
                         } catch (error) {
                             reject(error);
                         }
                     };
                     
-                    reader.onerror = () => reject(new Error('Error reading file'));
+                    reader.onerror = () => reject(new Error('Erreur de lecture du fichier'));
                     
                     if (file.name.endsWith('.csv')) {
                         reader.readAsText(file);
@@ -428,7 +437,7 @@
                 resultsDiv.innerHTML = '';
 
                 if (data.length === 0) {
-                    resultsDiv.innerHTML = '<div style="color: red; text-align: center; padding: 20px;">Aucune donnée trouvée. Vérifiez le format de vos fichiers Excel.</div>';
+                    resultsDiv.innerHTML = '<div class="error">Aucune donnée trouvée. Vérifiez le format de vos fichiers Excel.</div>';
                     return;
                 }
 
