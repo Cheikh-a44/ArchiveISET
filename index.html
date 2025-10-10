@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Système de Calcul des Moyennes - ENSTA</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         * {
@@ -29,13 +29,6 @@
             text-align: center;
             color: #2c3e50;
             margin-bottom: 10px;
-            font-size: 2.2em;
-        }
-        .subtitle {
-            text-align: center;
-            color: #7f8c8d;
-            margin-bottom: 30px;
-            font-size: 1.1em;
         }
         .upload-section {
             margin: 30px 0;
@@ -49,21 +42,18 @@
             padding: 15px;
             background: white;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         label {
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
             color: #2c3e50;
-            font-size: 1.1em;
         }
         input[type="file"] {
             width: 100%;
             padding: 12px;
             border: 2px solid #bdc3c7;
             border-radius: 6px;
-            background: white;
         }
         .buttons {
             display: flex;
@@ -79,17 +69,22 @@
             cursor: pointer;
             font-weight: bold;
             font-size: 16px;
-            transition: all 0.3s ease;
             min-width: 180px;
         }
         #btn-process {
-            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            background: #27ae60;
             color: white;
         }
         #btn-download {
-            background: linear-gradient(135deg, #2980b9, #3498db);
+            background: #2980b9;
             color: white;
             display: none;
+        }
+        .conversion-guide {
+            background: #e8f4fc;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
         }
         .results {
             margin-top: 30px;
@@ -99,131 +94,52 @@
             border: 2px solid #ecf0f1;
             display: none;
         }
-        .student-result {
-            margin-bottom: 25px;
-            padding: 20px;
-            border: 2px solid #ecf0f1;
-            border-radius: 10px;
-            background-color: #fafbfc;
-        }
-        .status-valid {
-            color: #27ae60;
-            font-weight: bold;
-            background-color: #d5f4e6;
-            padding: 4px 8px;
-            border-radius: 4px;
-        }
-        .status-non-valid {
-            color: #e74c3c;
-            font-weight: bold;
-            background-color: #fadbd8;
-            padding: 4px 8px;
-            border-radius: 4px;
-        }
-        .module-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 15px 0;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        .module-table th {
-            background: linear-gradient(135deg, #34495e, #2c3e50);
-            color: white;
-            padding: 12px;
-            text-align: left;
-            font-weight: 600;
-        }
-        .module-table td {
-            padding: 12px;
-            border-bottom: 1px solid #ecf0f1;
-            background: white;
-        }
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 30px;
-            background: white;
-            border-radius: 10px;
-            margin: 20px 0;
-        }
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3498db;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .error {
-            color: #e74c3c;
-            background-color: #fadbd8;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 15px 0;
-            border-left: 4px solid #e74c3c;
-        }
-        .debug {
-            background: #f8f9fa;
-            padding: 10px;
-            border-radius: 5px;
-            margin: 10px 0;
-            font-family: monospace;
-            font-size: 12px;
-            max-height: 200px;
-            overflow-y: auto;
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🎓 Système de Calcul des Moyennes</h1>
-        <div class="subtitle">ENSTA - École Nationale Supérieure des Technologies Avancées</div>
+        
+        <div class="conversion-guide">
+            <h3>📝 Guide de Conversion PDF vers Excel</h3>
+            <p><strong>Étape 1:</strong> Convertissez vos PDF en Excel/CSV via:</p>
+            <ul>
+                <li><a href="https://www.ilovepdf.com/pdf_to_excel" target="_blank">iLovePDF.com</a></li>
+                <li><a href="https://smallpdf.com/pdf-to-excel" target="_blank">SmallPDF.com</a></li>
+            </ul>
+            <p><strong>Étape 2:</strong> Téléchargez les fichiers convertis</p>
+            <p><strong>Étape 3:</strong> Utilisez le système ci-dessous avec les fichiers Excel/CSV</p>
+        </div>
         
         <div class="upload-section">
-            <h3>📁 Télécharger les fichiers PDF</h3>
+            <h3>📁 Télécharger les fichiers Excel/CSV</h3>
             
             <div class="file-input-group">
-                <label for="exam-file">📝 Fichier PDF des Examens (Obligatoire)</label>
-                <input type="file" id="exam-file" accept=".pdf">
+                <label for="exam-file">📝 Fichier des Examens (CSV/Excel)</label>
+                <input type="file" id="exam-file" accept=".csv,.xlsx,.xls">
             </div>
             
             <div class="file-input-group">
-                <label for="tp-file">🔬 Fichier PDF des TP (Optionnel)</label>
-                <input type="file" id="tp-file" accept=".pdf">
+                <label for="tp-file">🔬 Fichier des TP (CSV/Excel - Optionnel)</label>
+                <input type="file" id="tp-file" accept=".csv,.xlsx,.xls">
             </div>
             
             <div class="file-input-group">
-                <label for="devoir-file">📚 Fichier PDF des Devoirs (Obligatoire)</label>
-                <input type="file" id="devoir-file" accept=".pdf">
+                <label for="devoir-file">📚 Fichier des Devoirs (CSV/Excel)</label>
+                <input type="file" id="devoir-file" accept=".csv,.xlsx,.xls">
             </div>
         </div>
         
         <div class="buttons">
-            <button id="btn-process">🚀 Traiter les Fichiers et Calculer</button>
-            <button id="btn-download">📥 Télécharger le Rapport PDF</button>
+            <button id="btn-process">🚀 Traiter les Fichiers</button>
+            <button id="btn-download">📥 Télécharger Rapport PDF</button>
         </div>
         
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <p>Traitement des fichiers en cours...</p>
-        </div>
-        
-        <div id="debug-info"></div>
         <div id="results" class="results"></div>
     </div>
 
     <script>
-        // Configuration de PDF.js
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
-
-        // Configuration des matières
+        // تعريف المواد والوحدات
         const SUBJECTS = {
             'GEM': ['GEM121', 'Électricité et Mecanique', 'Électricité et Mécanique'],
             'GAB': ['GAB242', 'Génie de l\'agriculture'],
@@ -242,220 +158,142 @@
             'M24': ['GEM', 'GAB']
         };
 
-        const MODULE_NAMES = {
-            'M21': 'Module 21',
-            'M22': 'Module 22', 
-            'M23': 'Module 23',
-            'M24': 'Module 24'
-        };
-
         let processedData = [];
 
         document.addEventListener('DOMContentLoaded', function() {
-            const examFileInput = document.getElementById('exam-file');
-            const tpFileInput = document.getElementById('tp-file');
-            const devoirFileInput = document.getElementById('devoir-file');
             const btnProcess = document.getElementById('btn-process');
             const btnDownload = document.getElementById('btn-download');
             const resultsDiv = document.getElementById('results');
-            const loadingDiv = document.getElementById('loading');
-            const debugDiv = document.getElementById('debug-info');
-
-            // Fonction pour إضافة رسائل التصحيح
-            function debugLog(message) {
-                console.log(message);
-                debugDiv.innerHTML += `<div class="debug">${message}</div>`;
-            }
 
             btnProcess.addEventListener('click', processFiles);
             btnDownload.addEventListener('click', downloadPDF);
 
             async function processFiles() {
-                const examFile = examFileInput.files[0];
-                const tpFile = tpFileInput.files[0];
-                const devoirFile = devoirFileInput.files[0];
+                const examFile = document.getElementById('exam-file').files[0];
+                const tpFile = document.getElementById('tp-file').files[0];
+                const devoirFile = document.getElementById('devoir-file').files[0];
 
                 if (!examFile || !devoirFile) {
                     alert('Veuillez télécharger au moins les fichiers d\'Examen et Devoir.');
                     return;
                 }
 
-                debugDiv.innerHTML = '';
-                loadingDiv.style.display = 'block';
-                resultsDiv.style.display = 'none';
-                btnDownload.style.display = 'none';
-
                 try {
-                    debugLog('Début du traitement...');
-                    
-                    // استخراج البيانات من الملفات
-                    const examData = await extractDataFromPDF(examFile, 'exam');
-                    debugLog('Données d\'examen extraites: ' + Object.keys(examData).length + ' étudiants');
-                    
-                    const tpData = tpFile ? await extractDataFromPDF(tpFile, 'tp') : {};
-                    if (tpFile) debugLog('Données de TP extraites: ' + Object.keys(tpData).length + ' étudiants');
-                    
-                    const devoirData = await extractDataFromPDF(devoirFile, 'devoir');
-                    debugLog('Données de devoir extraites: ' + Object.keys(devoirData).length + ' étudiants');
+                    // قراءة الملفات
+                    const examData = await readFile(examFile);
+                    const tpData = tpFile ? await readFile(tpFile) : {};
+                    const devoirData = await readFile(devoirFile);
 
                     // معالجة البيانات
                     processedData = calculateResults(examData, tpData, devoirData);
-                    debugLog('Calculs terminés: ' + processedData.length + ' étudiants traités');
                     
                     // عرض النتائج
                     displayResults(processedData);
                     
-                    loadingDiv.style.display = 'none';
-                    resultsDiv.style.display = 'block';
                     btnDownload.style.display = 'inline-block';
 
                 } catch (error) {
-                    loadingDiv.style.display = 'none';
-                    debugLog('ERREUR: ' + error.message);
-                    resultsDiv.innerHTML = `<div class="error">Erreur lors du traitement: ${error.message}</div>`;
-                    resultsDiv.style.display = 'block';
+                    alert('Erreur: ' + error.message);
                 }
             }
 
-            async function extractDataFromPDF(file, type) {
+            function readFile(file) {
                 return new Promise((resolve, reject) => {
-                    const fileReader = new FileReader();
+                    const reader = new FileReader();
                     
-                    fileReader.onload = async function() {
+                    reader.onload = function(e) {
                         try {
-                            debugLog(`Extraction depuis ${file.name} (type: ${type})`);
-                            const typedArray = new Uint8Array(this.result);
-                            const pdf = await pdfjsLib.getDocument(typedArray).promise;
-                            let fullText = '';
-
-                            for (let i = 1; i <= pdf.numPages; i++) {
-                                const page = await pdf.getPage(i);
-                                const textContent = await page.getTextContent();
-                                const pageText = textContent.items.map(item => item.str).join(' ');
-                                fullText += pageText + '\n';
+                            let data = {};
+                            
+                            if (file.name.endsWith('.csv')) {
+                                // معالجة CSV
+                                const csvText = e.target.result;
+                                const results = Papa.parse(csvText, { header: true });
+                                data = parseCSVData(results.data);
+                            } else {
+                                // هنا يمكن إضافة دعم Excel باستخدام مكتبة like sheetjs
+                                alert('Support Excel coming soon. Please use CSV for now.');
+                                reject(new Error('Excel support not implemented'));
                             }
-
-                            const extractedData = parsePDFText(fullText, type);
-                            debugLog(`Données extraites: ${Object.keys(extractedData).length} étudiants trouvés`);
-                            resolve(extractedData);
+                            
+                            resolve(data);
                         } catch (error) {
                             reject(error);
                         }
                     };
-
-                    fileReader.onerror = function() {
-                        reject(new Error('Erreur de lecture du fichier'));
-                    };
-
-                    fileReader.readAsArrayBuffer(file);
+                    
+                    reader.onerror = () => reject(new Error('Error reading file'));
+                    reader.readAsText(file);
                 });
             }
 
-            function parsePDFText(text, type) {
-                const data = {};
-                const lines = text.split('\n');
-                let currentStudent = null;
-
-                debugLog(`Analyse de ${lines.length} lignes...`);
-
-                lines.forEach((line, index) => {
-                    line = line.trim();
+            function parseCSVData(csvData) {
+                const students = {};
+                
+                csvData.forEach(row => {
+                    // البحث عن رقم الطالب في أي عمود
+                    let studentId = null;
+                    let studentName = 'Étudiant Inconnu';
                     
-                    // تجاهل Stage S2
-                    if (line.includes('Stage S2') || line.includes('TC251')) {
-                        return;
-                    }
-
-                    // البحث عن أرقام الطلاب (7-8 أرقام)
-                    const studentIdMatch = line.match(/(\d{7,8})/);
-                    if (studentIdMatch && !currentStudent) {
-                        const studentId = studentIdMatch[1];
-                        // البحث عن اسم الطالب في الأسطر التالية
-                        let studentName = 'Étudiant ' + studentId;
-                        for (let i = index + 1; i < Math.min(index + 5, lines.length); i++) {
-                            const nameLine = lines[i].trim();
-                            if (nameLine && !nameLine.match(/\d{7,8}/) && !nameLine.match(/Moyenne/)) {
-                                studentName = nameLine;
-                                break;
+                    // البحث في جميع الأعمدة
+                    Object.values(row).forEach(value => {
+                        if (typeof value === 'string') {
+                            // البحث عن أرقام الطلاب
+                            const idMatch = value.match(/(\d{7,8})/);
+                            if (idMatch) {
+                                studentId = idMatch[1];
                             }
+                            
+                            // البحث عن الأسماء (تجاهل الأرقام والعناوين)
+                            if (value.length > 3 && !value.match(/^\d/) && !value.match(/moyenne|note|exam/i)) {
+                                studentName = value;
+                            }
+                        }
+                    });
+                    
+                    if (studentId) {
+                        if (!students[studentId]) {
+                            students[studentId] = {
+                                id: studentId,
+                                name: studentName,
+                                subjects: {}
+                            };
                         }
                         
-                        currentStudent = {
-                            id: studentId,
-                            name: studentName,
-                            subjects: {}
-                        };
-                        data[studentId] = currentStudent;
-                        debugLog(`Étudiant trouvé: ${studentId} - ${studentName}`);
-                        return;
-                    }
-
-                    // البحث عن المواد والدرجات
-                    if (currentStudent) {
-                        for (const [subjectCode, patterns] of Object.entries(SUBJECTS)) {
-                            for (const pattern of patterns) {
-                                if (line.includes(pattern)) {
-                                    const note = extractNoteFromLine(line);
-                                    if (note !== null) {
-                                        if (!currentStudent.subjects[subjectCode]) {
-                                            currentStudent.subjects[subjectCode] = {};
+                        // استخراج درجات المواد
+                        Object.entries(SUBJECTS).forEach(([code, patterns]) => {
+                            patterns.forEach(pattern => {
+                                Object.entries(row).forEach(([header, value]) => {
+                                    if (header && header.includes(pattern)) {
+                                        const note = parseFloat(value);
+                                        if (!isNaN(note)) {
+                                            if (!students[studentId].subjects[code]) {
+                                                students[studentId].subjects[code] = {};
+                                            }
+                                            students[studentId].subjects[code].note = note;
                                         }
-                                        currentStudent.subjects[subjectCode][type] = note;
-                                        debugLog(`Note ${type} pour ${subjectCode}: ${note}`);
                                     }
-                                    break;
-                                }
-                            }
-                        }
+                                });
+                            });
+                        });
                     }
                 });
-
-                return data;
-            }
-
-            function extractNoteFromLine(line) {
-                // البحث عن الأرقام العشرية
-                const noteMatches = line.match(/(\d{1,2}[,.]\d{1,2})/g);
-                if (noteMatches && noteMatches.length > 0) {
-                    // أخذ آخر رقم (عادةً الأكثر صلة)
-                    const noteStr = noteMatches[noteMatches.length - 1].replace(',', '.');
-                    const note = parseFloat(noteStr);
-                    return isNaN(note) ? null : note;
-                }
                 
-                // البحث عن الأرقام الصحيحة
-                const intMatches = line.match(/\b(\d{1,2})\b/g);
-                if (intMatches && intMatches.length > 0) {
-                    const note = parseInt(intMatches[intMatches.length - 1]);
-                    return isNaN(note) ? null : note;
-                }
-                
-                return null;
+                return students;
             }
 
             function calculateResults(examData, tpData, devoirData) {
                 const results = [];
                 const allStudentIds = new Set([
                     ...Object.keys(examData),
-                    ...Object.keys(tpData),
+                    ...Object.keys(tpData), 
                     ...Object.keys(devoirData)
                 ]);
 
-                debugLog(`Calcul pour ${allStudentIds.size} étudiants`);
-
                 allStudentIds.forEach(studentId => {
-                    const studentExam = examData[studentId];
-                    const studentTp = tpData[studentId];
-                    const studentDevoir = devoirData[studentId];
-
-                    if (!studentExam) {
-                        debugLog(`Étudiant ${studentId} non trouvé dans les données d'examen`);
-                        return;
-                    }
-
                     const student = {
                         id: studentId,
-                        name: studentExam.name,
+                        name: examData[studentId]?.name || 'Étudiant ' + studentId,
                         subjects: {},
                         modules: {},
                         moyenneGenerale: 0
@@ -464,11 +302,11 @@
                     let totalMatiere = 0;
                     let countMatiere = 0;
 
-                    // حساب المعدلات للمواد
+                    // حساب المعدلات
                     Object.keys(SUBJECTS).forEach(subjectCode => {
-                        const exam = studentExam.subjects?.[subjectCode]?.exam;
-                        const tp = studentTp?.subjects?.[subjectCode]?.tp;
-                        const devoir = studentDevoir?.subjects?.[subjectCode]?.devoir;
+                        const exam = examData[studentId]?.subjects?.[subjectCode]?.note;
+                        const tp = tpData[studentId]?.subjects?.[subjectCode]?.note;
+                        const devoir = devoirData[studentId]?.subjects?.[subjectCode]?.note;
 
                         if (exam !== undefined && devoir !== undefined) {
                             let moyenne;
@@ -483,7 +321,7 @@
                             student.subjects[subjectCode] = {
                                 exam,
                                 tp,
-                                devoir,
+                                devoir, 
                                 moyenne,
                                 status
                             };
@@ -493,7 +331,6 @@
                         }
                     });
 
-                    // حساب المعدل العام
                     if (countMatiere > 0) {
                         student.moyenneGenerale = totalMatiere / countMatiere;
                     }
@@ -527,11 +364,7 @@
 
             function displayResults(data) {
                 resultsDiv.innerHTML = '';
-
-                if (data.length === 0) {
-                    resultsDiv.innerHTML = '<div class="error">Aucune donnée trouvée. Vérifiez le format des fichiers PDF.</div>';
-                    return;
-                }
+                resultsDiv.style.display = 'block';
 
                 data.forEach(student => {
                     const studentDiv = document.createElement('div');
@@ -542,11 +375,10 @@
                         <p><strong>Moyenne Semestre:</strong> ${student.moyenneGenerale.toFixed(2)}</p>
                         
                         <h4>Modules:</h4>
-                        <table class="module-table">
+                        <table border="1" style="width:100%; border-collapse:collapse; margin:10px 0;">
                             <thead>
                                 <tr>
                                     <th>Module</th>
-                                    <th>Nom</th>
                                     <th>Moyenne</th>
                                     <th>Status</th>
                                 </tr>
@@ -557,13 +389,12 @@
                     Object.keys(MODULES).forEach(moduleCode => {
                         const module = student.modules[moduleCode];
                         if (module) {
-                            const statusClass = module.status === 'V' ? 'status-valid' : 'status-non-valid';
+                            const statusColor = module.status === 'V' ? 'green' : 'red';
                             html += `
                                 <tr>
                                     <td>${moduleCode}</td>
-                                    <td>${MODULE_NAMES[moduleCode]}</td>
                                     <td>${module.moyenne.toFixed(2)}</td>
-                                    <td class="${statusClass}">${module.status}</td>
+                                    <td style="color:${statusColor}">${module.status}</td>
                                 </tr>
                             `;
                         }
@@ -574,7 +405,7 @@
                         </table>
                         
                         <h4>Détail des Matières:</h4>
-                        <table class="module-table">
+                        <table border="1" style="width:100%; border-collapse:collapse; margin:10px 0;">
                             <thead>
                                 <tr>
                                     <th>Matière</th>
@@ -590,7 +421,7 @@
 
                     Object.keys(student.subjects).forEach(subjectCode => {
                         const subject = student.subjects[subjectCode];
-                        const statusClass = subject.status === 'C' ? 'status-valid' : 'status-non-valid';
+                        const statusColor = subject.status === 'C' ? 'green' : 'red';
                         html += `
                             <tr>
                                 <td>${SUBJECTS[subjectCode][1]}</td>
@@ -598,7 +429,7 @@
                                 <td>${subject.devoir.toFixed(2)}</td>
                                 <td>${subject.exam.toFixed(2)}</td>
                                 <td>${subject.moyenne.toFixed(2)}</td>
-                                <td class="${statusClass}">${subject.status}</td>
+                                <td style="color:${statusColor}">${subject.status}</td>
                             </tr>
                         `;
                     });
@@ -614,43 +445,32 @@
                 const doc = new jsPDF();
 
                 processedData.forEach((student, index) => {
-                    if (index > 0) {
-                        doc.addPage();
-                    }
+                    if (index > 0) doc.addPage();
 
                     doc.setFontSize(16);
-                    doc.text(`Rapport des Notes - ${student.name}`, 20, 20);
+                    doc.text(`Rapport - ${student.name}`, 20, 20);
                     doc.setFontSize(12);
-                    doc.text(`ID: ${student.id}`, 20, 30);
-                    doc.text(`Moyenne Semestre: ${student.moyenneGenerale.toFixed(2)}`, 20, 40);
+                    doc.text(`ID: ${student.id} - Moyenne: ${student.moyenneGenerale.toFixed(2)}`, 20, 30);
 
-                    let y = 60;
+                    let y = 50;
                     doc.text('Modules:', 20, y);
                     y += 10;
                     
-                    doc.setFontSize(10);
                     Object.keys(MODULES).forEach(moduleCode => {
                         const module = student.modules[moduleCode];
                         if (module) {
-                            const status = module.status === 'V' ? 'Validé' : 'Non Validé';
-                            doc.text(`${moduleCode} (${MODULE_NAMES[moduleCode]}): ${module.moyenne.toFixed(2)} - ${status}`, 25, y);
+                            doc.text(`${moduleCode}: ${module.moyenne.toFixed(2)} - ${module.status}`, 25, y);
                             y += 7;
                         }
                     });
 
                     y += 10;
-                    doc.text('Détail des Matières:', 20, y);
+                    doc.text('Matières:', 20, y);
                     y += 10;
 
                     Object.keys(student.subjects).forEach(subjectCode => {
                         const subject = student.subjects[subjectCode];
-                        const status = subject.status === 'C' ? 'C' : 'NC';
-                        
-                        doc.text(`${SUBJECTS[subjectCode][1]}: TP ${subject.tp !== undefined ? subject.tp.toFixed(2) : '-'} | 
-                                Devoir ${subject.devoir.toFixed(2)} | 
-                                Exam ${subject.exam.toFixed(2)} | 
-                                Moy ${subject.moyenne.toFixed(2)} | 
-                                ${status}`, 25, y);
+                        doc.text(`${SUBJECTS[subjectCode][1]}: ${subject.moyenne.toFixed(2)} - ${subject.status}`, 25, y);
                         y += 7;
                     });
                 });
