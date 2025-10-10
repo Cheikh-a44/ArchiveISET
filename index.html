@@ -182,6 +182,7 @@
             width: 100%;
             border-collapse: collapse;
             margin: 15px 0;
+            font-size: 14px;
         }
         .results-table th {
             background: #34495e;
@@ -191,7 +192,7 @@
             font-weight: 600;
         }
         .results-table td {
-            padding: 12px;
+            padding: 10px;
             border-bottom: 1px solid #ecf0f1;
         }
         .results-table tr:hover td {
@@ -221,6 +222,22 @@
             background: #e8f4fc;
             border-radius: 8px;
             margin: 10px 0;
+        }
+        .note-details {
+            display: flex;
+            gap: 10px;
+            margin: 5px 0;
+            font-size: 12px;
+            color: #666;
+        }
+        .note-item {
+            background: #f8f9fa;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .subject-details {
+            margin-top: 5px;
         }
     </style>
 </head>
@@ -421,23 +438,22 @@
             function calculateStudentResults(student) {
                 let totalMatiere = 0;
                 let countMatiere = 0;
+                const matiereTemp = {};
 
-                // حساب معدلات المواد
+                // 1. حساب معدلات المواد أولاً
                 Object.keys(student.subjects).forEach(subjectCode => {
                     const subject = student.subjects[subjectCode];
                     let moyenne;
 
+                    // نفس قواعد Kivy: إذا كان TP موجود: (TP×1 + Devoir×2 + Exam×3)/6
+                    // إذا لم يكن TP موجود: (Devoir×2 + Exam×3)/5
                     if (subject.tp !== undefined) {
                         moyenne = (subject.tp * 1 + subject.devoir * 2 + subject.exam * 3) / 6;
                     } else {
                         moyenne = (subject.devoir * 2 + subject.exam * 3) / 5;
                     }
 
-                    const status = moyenne >= 7 ? 'C' : 'NC';
-                    
-                    student.subjects[subjectCode].moyenne = moyenne;
-                    student.subjects[subjectCode].status = status;
-
+                    matiereTemp[subjectCode] = { moyenne };
                     totalMatiere += moyenne;
                     countMatiere++;
                 });
@@ -446,24 +462,66 @@
                 student.moyenneGenerale = countMatiere > 0 ? totalMatiere / countMatiere : 0;
                 student.statusSemestre = student.moyenneGenerale >= 10 ? 'Validé' : 'Non Validé';
 
-                // حساب الوحدات
-                student.modules = {};
+                // 2. حساب الوحدات وتحديد status الوحدات أولاً
+                const modStatus = {};
+                const moduleAverages = {};
+
+                // حساب معدل كل وحدة وتحديد status الوحدات
                 Object.keys(MODULES).forEach(moduleCode => {
                     const [subject1, subject2] = MODULES[moduleCode];
-                    const subj1 = student.subjects[subject1];
-                    const subj2 = student.subjects[subject2];
+                    const subj1 = matiereTemp[subject1];
+                    const subj2 = matiereTemp[subject2];
 
                     if (subj1 && subj2) {
                         const moyenneModule = (subj1.moyenne + subj2.moyenne) / 2;
-                        let statusModule = 'V';
+                        moduleAverages[moduleCode] = moyenneModule;
                         
-                        if (moyenneModule < 10 || subj1.status === 'NC' || subj2.status === 'NC') {
-                            statusModule = 'NV';
+                        // القاعدة: الوحدة NV إذا كانت أي مادة < 7
+                        // وإلا V إذا كان معدل الوحدة ≥ 10
+                        if (subj1.moyenne < 7 || subj2.moyenne < 7) {
+                            modStatus[moduleCode] = "NV";
+                        } else {
+                            modStatus[moduleCode] = moyenneModule >= 10 ? "V" : "NV";
                         }
+                    }
+                });
 
+                // 3. الآن تحديد status المواد بناءً على القواعد الجديدة
+                Object.keys(student.subjects).forEach(subjectCode => {
+                    const subjectData = student.subjects[subjectCode];
+                    const moyenne = matiereTemp[subjectCode].moyenne;
+
+                    // البحث عن الوحدة التي تنتمي إليها المادة
+                    let moduleCode = null;
+                    Object.keys(MODULES).forEach(modCode => {
+                        if (MODULES[modCode].includes(subjectCode)) {
+                            moduleCode = modCode;
+                        }
+                    });
+
+                    let status = "NC";
+                    
+                    // القاعدة النهائية: المادة C إذا:
+                    // 1. المادة ≥ 10 
+                    // أو
+                    // 2. المادة ≥ 7 والوحدة ≥ 10
+                    if (moyenne >= 10) {
+                        status = "C";
+                    } else if (moduleCode && moyenne >= 7 && moduleAverages[moduleCode] >= 10) {
+                        status = "C";
+                    }
+
+                    student.subjects[subjectCode].moyenne = moyenne;
+                    student.subjects[subjectCode].status = status;
+                });
+
+                // 4. حفظ نتائج الوحدات النهائية
+                student.modules = {};
+                Object.keys(MODULES).forEach(moduleCode => {
+                    if (moduleAverages[moduleCode]) {
                         student.modules[moduleCode] = {
-                            moyenne: moyenneModule,
-                            status: statusModule
+                            moyenne: moduleAverages[moduleCode],
+                            status: modStatus[moduleCode]
                         };
                     }
                 });
@@ -522,20 +580,18 @@
                                     <tbody>
                         `;
 
-                        Object.keys(MODULES).forEach(moduleCode => {
+                        Object.keys(student.modules).forEach(moduleCode => {
                             const module = student.modules[moduleCode];
-                            if (module) {
-                                const statusClass = module.status === 'V' ? 'status-valid' : 'status-non-valid';
-                                html += `
-                                    <tr>
-                                        <td>${moduleCode}</td>
-                                        <td>${MODULE_NAMES[moduleCode]}</td>
-                                        <td>${module.moyenne.toFixed(2)}</td>
-                                        <td>6.0</td>
-                                        <td class="${statusClass}">${module.status}</td>
-                                    </tr>
-                                `;
-                            }
+                            const statusClass = module.status === 'V' ? 'status-valid' : 'status-non-valid';
+                            html += `
+                                <tr>
+                                    <td>${moduleCode}</td>
+                                    <td>${MODULE_NAMES[moduleCode]}</td>
+                                    <td>${module.moyenne.toFixed(2)}</td>
+                                    <td>6.0</td>
+                                    <td class="${statusClass}">${module.status}</td>
+                                </tr>
+                            `;
                         });
 
                         html += `
@@ -548,9 +604,7 @@
                                 <thead>
                                     <tr>
                                         <th>Matière</th>
-                                        <th>TP</th>
-                                        <th>Devoir</th>
-                                        <th>Examen</th>
+                                        <th>Notes</th>
                                         <th>Moyenne</th>
                                         <th>Crédits</th>
                                         <th>Status</th>
@@ -562,13 +616,23 @@
                         Object.keys(student.subjects).forEach(subjectCode => {
                             const subject = student.subjects[subjectCode];
                             const statusClass = subject.status === 'C' ? 'status-C' : 'status-NC';
+                            
+                            // عرض تفصيلي للدرجات كما في الصورة
+                            const notesDetail = `
+                                <div class="subject-details">
+                                    <div class="note-details">
+                                        <span class="note-item">TP: ${subject.tp !== undefined ? subject.tp.toFixed(2) : '-'}</span>
+                                        <span class="note-item">Devoir: ${subject.devoir.toFixed(2)}</span>
+                                        <span class="note-item">Examen: ${subject.exam.toFixed(2)}</span>
+                                    </div>
+                                </div>
+                            `;
+
                             html += `
                                 <tr>
-                                    <td>${SUBJECTS[subjectCode]}</td>
-                                    <td>${subject.tp !== undefined ? subject.tp.toFixed(2) : '-'}</td>
-                                    <td>${subject.devoir.toFixed(2)}</td>
-                                    <td>${subject.exam.toFixed(2)}</td>
-                                    <td>${subject.moyenne.toFixed(2)}</td>
+                                    <td><strong>${SUBJECTS[subjectCode]}</strong></td>
+                                    <td>${notesDetail}</td>
+                                    <td><strong>${subject.moyenne.toFixed(2)}</strong></td>
                                     <td>3.0</td>
                                     <td class="${statusClass}">${subject.status}</td>
                                 </tr>
@@ -610,35 +674,23 @@
                         doc.addPage();
                     }
 
-                    // En-tête
+                    // En-tête - نفس تنسيق الصورة
                     doc.setFontSize(16);
-                    doc.text(`Rapport des Notes - ${student.name}`, 20, 20);
+                    doc.text(`${student.id} ${student.name}`, 20, 20);
                     doc.setFontSize(12);
-                    doc.text(`ID: ${student.id}`, 20, 30);
-                    doc.text(`Moyenne Semestre: ${student.moyenneGenerale.toFixed(2)} - ${student.statusSemestre}`, 20, 40);
+                    doc.text(`Moyenne Semestre : ${student.moyenneGenerale.toFixed(2)}`, 20, 30);
+                    doc.text(student.statusSemestre, 150, 30);
 
-                    // الوحدات
-                    let y = 60;
-                    doc.setFontSize(14);
-                    doc.text('Modules:', 20, y);
-                    y += 10;
-                    
-                    doc.setFontSize(10);
-                    Object.keys(MODULES).forEach(moduleCode => {
+                    // الوحدات - نفس تنسيق الصورة
+                    let y = 50;
+                    Object.keys(student.modules).forEach(moduleCode => {
                         const module = student.modules[moduleCode];
-                        if (module) {
-                            doc.text(`${moduleCode} ${MODULE_NAMES[moduleCode]} ${module.moyenne.toFixed(2)} 6.0 ${module.status}`, 25, y);
-                            y += 7;
-                        }
+                        doc.text(`${moduleCode} ${MODULE_NAMES[moduleCode]} ${module.moyenne.toFixed(2)} 6.0 ${module.status}`, 20, y);
+                        y += 8;
                     });
 
-                    // المواد
+                    // المواد - نفس تنسيق الصورة
                     y += 10;
-                    doc.setFontSize(14);
-                    doc.text('Détail des Matières:', 20, y);
-                    y += 10;
-                    
-                    doc.setFontSize(9);
                     Object.keys(student.subjects).forEach(subjectCode => {
                         const subject = student.subjects[subjectCode];
                         const line = `${SUBJECTS[subjectCode]} ${subject.tp !== undefined ? subject.tp.toFixed(2) : '-'} ${subject.devoir.toFixed(2)} ${subject.exam.toFixed(2)} ${subject.moyenne.toFixed(2)} 3.0 ${subject.status}`;
@@ -650,7 +702,7 @@
                 doc.save('rapport_moyennes_ENSTA.pdf');
             }
 
-            // دالة حذف الطالب (يجب أن تكون عامة)
+            // دالة حذف الطالب
             window.deleteStudent = function(index) {
                 if (confirm('Voulez-vous vraiment supprimer cet étudiant?')) {
                     students.splice(index, 1);
