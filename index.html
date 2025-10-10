@@ -159,16 +159,10 @@
         .status-valid {
             color: #27ae60;
             font-weight: bold;
-            background: #d5f4e6;
-            padding: 4px 12px;
-            border-radius: 20px;
         }
         .status-non-valid {
             color: #e74c3c;
             font-weight: bold;
-            background: #fadbd8;
-            padding: 4px 12px;
-            border-radius: 20px;
         }
         .status-C {
             color: #27ae60;
@@ -183,26 +177,42 @@
             border-collapse: collapse;
             margin: 15px 0;
             font-size: 14px;
+            border: 1px solid #ddd;
         }
         .results-table th {
             background: #34495e;
             color: white;
             padding: 12px;
-            text-align: left;
+            text-align: center;
             font-weight: 600;
+            border: 1px solid #ddd;
         }
         .results-table td {
             padding: 10px;
-            border-bottom: 1px solid #ecf0f1;
+            border: 1px solid #ddd;
+            text-align: center;
         }
-        .results-table tr:hover td {
-            background: #f8f9fa;
+        .results-table tr:nth-child(even) {
+            background-color: #f9f9f9;
         }
-        .module-section {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 10px 0;
+        .results-table tr:hover {
+            background-color: #f1f1f1;
+        }
+        .module-row {
+            background-color: #e8f4fc !important;
+            font-weight: bold;
+        }
+        .student-info-row {
+            background-color: #f0f8ff !important;
+            font-weight: bold;
+        }
+        .semester-average-row {
+            background-color: #fff3cd !important;
+            font-weight: bold;
+        }
+        .stage-row {
+            background-color: #e8f5e9 !important;
+            font-weight: bold;
         }
         .delete-btn {
             background: #e74c3c;
@@ -238,6 +248,12 @@
         }
         .subject-details {
             margin-top: 5px;
+        }
+        .no-students {
+            text-align: center;
+            color: #7f8c8d;
+            padding: 20px;
+            font-style: italic;
         }
     </style>
 </head>
@@ -533,7 +549,7 @@
                 studentsList.innerHTML = '';
 
                 if (students.length === 0) {
-                    studentsList.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 20px;">Aucun étudiant ajouté</p>';
+                    studentsList.innerHTML = '<p class="no-students">Aucun étudiant ajouté</p>';
                     return;
                 }
 
@@ -561,87 +577,93 @@
 
                     if (student.calculated) {
                         html += `
-                            <div class="moyenne-generale">
-                                Moyenne Semestre : ${student.moyenneGenerale.toFixed(2)}
-                            </div>
-
-                            <div class="module-section">
-                                <h4>Modules:</h4>
-                                <table class="results-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Module</th>
-                                            <th>Nom</th>
-                                            <th>Moyenne</th>
-                                            <th>Crédits</th>
-                                            <th>Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                        `;
-
-                        Object.keys(student.modules).forEach(moduleCode => {
-                            const module = student.modules[moduleCode];
-                            const statusClass = module.status === 'V' ? 'status-valid' : 'status-non-valid';
-                            html += `
-                                <tr>
-                                    <td>${moduleCode}</td>
-                                    <td>${MODULE_NAMES[moduleCode]}</td>
-                                    <td>${module.moyenne.toFixed(2)}</td>
-                                    <td>6.0</td>
-                                    <td class="${statusClass}">${module.status}</td>
-                                </tr>
-                            `;
-                        });
-
-                        html += `
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <h4>Détail des Matières:</h4>
                             <table class="results-table">
                                 <thead>
                                     <tr>
-                                        <th>Matière</th>
-                                        <th>Notes</th>
-                                        <th>Moyenne</th>
-                                        <th>Crédits</th>
-                                        <th>Status</th>
+                                        <th>Numéro</th>
+                                        <th>Nom et Prénom</th>
+                                        <th>TP</th>
+                                        <th>CC</th>
+                                        <th>Examen</th>
+                                        <th>NFe</th>
+                                        <th>Crédit</th>
+                                        <th>Observations</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                         `;
 
-                        Object.keys(student.subjects).forEach(subjectCode => {
-                            const subject = student.subjects[subjectCode];
-                            const statusClass = subject.status === 'C' ? 'status-C' : 'status-NC';
-                            
-                            // عرض تفصيلي للدرجات كما في الصورة
-                            const notesDetail = `
-                                <div class="subject-details">
-                                    <div class="note-details">
-                                        <span class="note-item">TP: ${subject.tp !== undefined ? subject.tp.toFixed(2) : '-'}</span>
-                                        <span class="note-item">Devoir: ${subject.devoir.toFixed(2)}</span>
-                                        <span class="note-item">Examen: ${subject.exam.toFixed(2)}</span>
-                                    </div>
-                                </div>
-                            `;
+                        // معلومات الطالب والمعدل الفصلي
+                        html += `
+                            <tr class="student-info-row">
+                                <td>${student.id}</td>
+                                <td>${student.name}</td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td>Moyenne Semestre : ${student.moyenneGenerale.toFixed(2)}</td>
+                                <td></td>
+                                <td class="${student.statusSemestre === 'Validé' ? 'status-valid' : 'status-non-valid'}">${student.statusSemestre}</td>
+                            </tr>
+                        `;
 
-                            html += `
-                                <tr>
-                                    <td><strong>${SUBJECTS[subjectCode]}</strong></td>
-                                    <td>${notesDetail}</td>
-                                    <td><strong>${subject.moyenne.toFixed(2)}</strong></td>
-                                    <td>3.0</td>
-                                    <td class="${statusClass}">${subject.status}</td>
-                                </tr>
-                            `;
+                        // معلومات التدريب (Stage)
+                        html += `
+                            <tr class="stage-row">
+                                <td>${student.id.substring(0, 4)}</td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td>Stage S2 : 6.0</td>
+                                <td></td>
+                                <td class="status-valid">Validé</td>
+                            </tr>
+                        `;
+
+                        // عرض الوحدات والمواد
+                        Object.keys(MODULES).forEach(moduleCode => {
+                            const module = student.modules[moduleCode];
+                            
+                            if (module) {
+                                // صف الوحدة
+                                html += `
+                                    <tr class="module-row">
+                                        <td>${moduleCode}</td>
+                                        <td>${MODULE_NAMES[moduleCode]}</td>
+                                        <td></td>
+                                        <td></td>
+                                        <td>${module.moyenne.toFixed(2)}</td>
+                                        <td></td>
+                                        <td>6.0</td>
+                                        <td class="${module.status === 'V' ? 'status-valid' : 'status-non-valid'}">${module.status}</td>
+                                    </tr>
+                                `;
+
+                                // صفوف المواد التابعة للوحدة
+                                MODULES[moduleCode].forEach(subjectCode => {
+                                    const subject = student.subjects[subjectCode];
+                                    if (subject) {
+                                        html += `
+                                            <tr>
+                                                <td></td>
+                                                <td>${SUBJECTS[subjectCode]}</td>
+                                                <td>${subject.tp !== undefined ? subject.tp.toFixed(2) : ''}</td>
+                                                <td>${subject.devoir.toFixed(2)}</td>
+                                                <td>${subject.exam.toFixed(2)}</td>
+                                                <td>${subject.moyenne.toFixed(2)}</td>
+                                                <td>3.0</td>
+                                                <td class="${subject.status === 'C' ? 'status-C' : 'status-NC'}">${subject.status}</td>
+                                            </tr>
+                                        `;
+                                    }
+                                });
+                            }
                         });
 
                         html += `</tbody></table>`;
                     } else {
-                        html += `<p style="color: #7f8c8d; text-align: center;">Cliquez sur "Calculer toutes les moyennes" pour voir les résultats</p>`;
+                        html += `<p class="no-students">Cliquez sur "Calculer toutes les moyennes" pour voir les résultats</p>`;
                     }
 
                     studentCard.innerHTML = html;
@@ -674,28 +696,61 @@
                         doc.addPage();
                     }
 
-                    // En-tête - نفس تنسيق الصورة
+                    // En-tête
                     doc.setFontSize(16);
-                    doc.text(`${student.id} ${student.name}`, 20, 20);
+                    doc.text('ENSTA - Résultats Semestre', 20, 20);
                     doc.setFontSize(12);
-                    doc.text(`Moyenne Semestre : ${student.moyenneGenerale.toFixed(2)}`, 20, 30);
-                    doc.text(student.statusSemestre, 150, 30);
+                    doc.text(`Étudiant: ${student.name} (ID: ${student.id})`, 20, 35);
+                    doc.text(`Moyenne Semestre: ${student.moyenneGenerale.toFixed(2)} - ${student.statusSemestre}`, 20, 45);
 
-                    // الوحدات - نفس تنسيق الصورة
-                    let y = 50;
-                    Object.keys(student.modules).forEach(moduleCode => {
-                        const module = student.modules[moduleCode];
-                        doc.text(`${moduleCode} ${MODULE_NAMES[moduleCode]} ${module.moyenne.toFixed(2)} 6.0 ${module.status}`, 20, y);
-                        y += 8;
-                    });
-
-                    // المواد - نفس تنسيق الصورة
+                    // جدول النتائج
+                    const headers = ['Module/Matière', 'TP', 'CC', 'Examen', 'NFe', 'Crédit', 'Observations'];
+                    let y = 65;
+                    
+                    // En-têtes du tableau
+                    doc.setFillColor(52, 73, 94);
+                    doc.setTextColor(255, 255, 255);
+                    doc.rect(20, y, 170, 10, 'F');
+                    doc.text(headers[0], 22, y+7);
+                    doc.text(headers[1], 70, y+7);
+                    doc.text(headers[2], 90, y+7);
+                    doc.text(headers[3], 110, y+7);
+                    doc.text(headers[4], 130, y+7);
+                    doc.text(headers[5], 150, y+7);
+                    doc.text(headers[6], 165, y+7);
+                    
                     y += 10;
-                    Object.keys(student.subjects).forEach(subjectCode => {
-                        const subject = student.subjects[subjectCode];
-                        const line = `${SUBJECTS[subjectCode]} ${subject.tp !== undefined ? subject.tp.toFixed(2) : '-'} ${subject.devoir.toFixed(2)} ${subject.exam.toFixed(2)} ${subject.moyenne.toFixed(2)} 3.0 ${subject.status}`;
-                        doc.text(line, 25, y);
-                        y += 6;
+                    doc.setTextColor(0, 0, 0);
+
+                    // الوحدات والمواد
+                    Object.keys(MODULES).forEach(moduleCode => {
+                        const module = student.modules[moduleCode];
+                        
+                        if (module) {
+                            // صف الوحدة
+                            doc.setFillColor(232, 244, 252);
+                            doc.rect(20, y, 170, 8, 'F');
+                            doc.text(`${moduleCode} ${MODULE_NAMES[moduleCode]}`, 22, y+5);
+                            doc.text(module.moyenne.toFixed(2), 110, y+5);
+                            doc.text('6.0', 150, y+5);
+                            doc.text(module.status, 165, y+5);
+                            y += 8;
+
+                            // صفوف المواد
+                            MODULES[moduleCode].forEach(subjectCode => {
+                                const subject = student.subjects[subjectCode];
+                                if (subject) {
+                                    doc.text(SUBJECTS[subjectCode], 25, y+5);
+                                    doc.text(subject.tp !== undefined ? subject.tp.toFixed(2) : '', 70, y+5);
+                                    doc.text(subject.devoir.toFixed(2), 90, y+5);
+                                    doc.text(subject.exam.toFixed(2), 110, y+5);
+                                    doc.text(subject.moyenne.toFixed(2), 130, y+5);
+                                    doc.text('3.0', 150, y+5);
+                                    doc.text(subject.status, 165, y+5);
+                                    y += 6;
+                                }
+                            });
+                        }
                     });
                 });
 
