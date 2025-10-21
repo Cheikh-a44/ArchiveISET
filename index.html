@@ -582,7 +582,7 @@
                             <table class="results-table">
                                 <thead>
                                     <tr>
-                                        <th>Numéro</th>
+                                        <th>Matricule</th>
                                         <th>Nom et Prénom</th>
                                         <th>TP</th>
                                         <th>CC</th>
@@ -693,22 +693,22 @@
                     doc.setFontSize(12);
                     doc.text('Filière : L1TC-L1 Licence TC', 20, 30);
 
-                    // جدول النتائج - تماماً كما في الصورة الأصلية
-                    const headers = ['Numéro', 'Nom et Prénom', 'TP', 'CC', 'Examen', 'NFe', 'Crédit', 'Observations'];
+                    // جدول النتائج - تماماً كما في الصورة الأصلية مع توسيع الخانات
+                    const headers = ['Matricule', 'Nom et Prénom', 'TP', 'CC', 'Examen', 'NFe', 'Crédit', 'Observations'];
                     let y = 45;
                     
-                    // En-têtes du tableau
+                    // En-têtes du tableau مع توسيع الخانات
                     doc.setFillColor(52, 73, 94);
                     doc.setTextColor(255, 255, 255);
                     doc.rect(20, y, 170, 10, 'F');
-                    doc.text(headers[0], 22, y+7);
-                    doc.text(headers[1], 45, y+7);
-                    doc.text(headers[2], 85, y+7);
-                    doc.text(headers[3], 100, y+7);
-                    doc.text(headers[4], 115, y+7);
-                    doc.text(headers[5], 135, y+7);
-                    doc.text(headers[6], 155, y+7);
-                    doc.text(headers[7], 170, y+7);
+                    doc.text(headers[0], 22, y+7);    // Matricule
+                    doc.text(headers[1], 45, y+7);    // Nom et Prénom (مساحة أكبر)
+                    doc.text(headers[2], 95, y+7);    // TP
+                    doc.text(headers[3], 110, y+7);   // CC
+                    doc.text(headers[4], 125, y+7);   // Examen
+                    doc.text(headers[5], 145, y+7);   // NFe
+                    doc.text(headers[6], 160, y+7);   // Crédit
+                    doc.text(headers[7], 175, y+7);   // Observations
                     
                     y += 10;
                     doc.setTextColor(0, 0, 0);
@@ -718,11 +718,11 @@
                     doc.rect(20, y, 170, 8, 'F');
                     doc.text(student.id, 22, y+5);
                     doc.text(student.name, 45, y+5);
-                    doc.text('Moyenne Semestre : ' + student.moyenneGenerale.toFixed(2), 135, y+5);
-                    doc.text(student.statusSemestre, 170, y+5);
+                    doc.text('Moyenne Semestre : ' + student.moyenneGenerale.toFixed(2), 145, y+5);
+                    doc.text(student.statusSemestre, 175, y+5);
                     y += 8;
 
-                    // الوحدات والمواد - تماماً كما في الصورة الأصلية
+                    // الوحدات والمواد - تماماً كما في الصورة الأصلية مع توسيع الخانات
                     Object.keys(MODULES).forEach(moduleCode => {
                         const module = student.modules[moduleCode];
                         
@@ -732,12 +732,12 @@
                             doc.rect(20, y, 170, 8, 'F');
                             doc.text(moduleCode, 22, y+5);
                             doc.text(MODULE_NAMES[moduleCode], 45, y+5);
-                            doc.text(module.moyenne.toFixed(2), 115, y+5);
-                            doc.text(module.credit.toFixed(1), 155, y+5);
-                            doc.text(module.status, 170, y+5);
+                            doc.text(module.moyenne.toFixed(2), 125, y+5);
+                            doc.text(module.credit.toFixed(1), 160, y+5);
+                            doc.text(module.status, 175, y+5);
                             y += 8;
 
-                            // صفوف المواد
+                            // صفوف المواد مع توسيع المساحة للأسماء الطويلة
                             MODULES[moduleCode].forEach(subjectCode => {
                                 const subject = student.subjects[subjectCode];
                                 if (subject) {
@@ -745,14 +745,26 @@
                                     const subjectCredit = subject.status === "C" ? "3.0" : "0.0";
                                     
                                     doc.text('', 22, y+5);
-                                    doc.text(SUBJECTS[subjectCode], 45, y+5);
-                                    doc.text(subject.tp !== undefined ? subject.tp.toFixed(2) : '', 85, y+5);
-                                    doc.text(subject.devoir.toFixed(2), 100, y+5);
-                                    doc.text(subject.exam.toFixed(2), 115, y+5);
-                                    doc.text(subject.moyenne.toFixed(2), 135, y+5);
-                                    doc.text(subjectCredit, 155, y+5);
-                                    doc.text(subject.status, 170, y+5);
-                                    y += 6;
+                                    
+                                    // تقسيم النص الطويل إذا كان ضرورياً
+                                    const subjectName = SUBJECTS[subjectCode];
+                                    if (subjectName.length > 25) {
+                                        // تقسيم النص إلى سطرين
+                                        const firstPart = subjectName.substring(0, 25);
+                                        const secondPart = subjectName.substring(25);
+                                        doc.text(firstPart, 45, y+3);
+                                        doc.text(secondPart, 45, y+7);
+                                    } else {
+                                        doc.text(subjectName, 45, y+5);
+                                    }
+                                    
+                                    doc.text(subject.tp !== undefined ? subject.tp.toFixed(2) : '', 95, y+5);
+                                    doc.text(subject.devoir.toFixed(2), 110, y+5);
+                                    doc.text(subject.exam.toFixed(2), 125, y+5);
+                                    doc.text(subject.moyenne.toFixed(2), 145, y+5);
+                                    doc.text(subjectCredit, 160, y+5);
+                                    doc.text(subject.status, 175, y+5);
+                                    y += 8; // زيادة المسافة بين الصفوف للأسماء الطويلة
                                 }
                             });
                         }
