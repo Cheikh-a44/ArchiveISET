@@ -470,10 +470,10 @@
         };
 
         const MODULE_NAMES_S1 = {
-            'M11': 'Module 11 - Langues',
-            'M12': 'Module 12 - Informatique et Mathématiques',
-            'M13': 'Module 13 - Sciences Physiques',
-            'M14': 'Module 14 - Sciences Biologiques'
+            'M11': 'Module 11',
+            'M12': 'Module 12',
+            'M13': 'Module 13',
+            'M14': 'Module 14'
         };
 
         let studentsS1 = [];
@@ -935,22 +935,22 @@
                 doc.setFontSize(12);
                 doc.text('Filière : L1TC-L1 Licence TC', 20, 30);
 
-                // جدول النتائج
+                // جدول النتائج - أبعاد معدلة لمنع التداخل
                 const headers = ['Numéro', 'Nom et Prénom', 'TP', 'CC', 'Examen', 'NFe', 'Crédit', 'Observations'];
                 let y = 45;
                 
-                // En-têtes du tableau
+                // En-têtes du tableau - أعمدة أوسع
                 doc.setFillColor(52, 73, 94);
                 doc.setTextColor(255, 255, 255);
                 doc.rect(20, y, 170, 10, 'F');
-                doc.text(headers[0], 22, y+7);
-                doc.text(headers[1], 45, y+7);
-                doc.text(headers[2], 85, y+7);
-                doc.text(headers[3], 100, y+7);
-                doc.text(headers[4], 115, y+7);
-                doc.text(headers[5], 135, y+7);
-                doc.text(headers[6], 155, y+7);
-                doc.text(headers[7], 170, y+7);
+                doc.text(headers[0], 22, y+7);        // Numéro
+                doc.text(headers[1], 40, y+7);        // Nom et Prénom (أوسع)
+                doc.text(headers[2], 85, y+7);        // TP
+                doc.text(headers[3], 100, y+7);       // CC
+                doc.text(headers[4], 115, y+7);       // Examen
+                doc.text(headers[5], 135, y+7);       // NFe (أوسع)
+                doc.text(headers[6], 155, y+7);       // Crédit
+                doc.text(headers[7], 170, y+7);       // Observations
                 
                 y += 10;
                 doc.setTextColor(0, 0, 0);
@@ -959,8 +959,8 @@
                 doc.setFillColor(240, 248, 255);
                 doc.rect(20, y, 170, 8, 'F');
                 doc.text(student.id, 22, y+5);
-                doc.text(student.name, 45, y+5);
-                doc.text('Moyenne Semestre : ' + student.moyenneGenerale.toFixed(2), 135, y+5);
+                doc.text(student.name, 40, y+5);
+                doc.text('Moy Sem: ' + student.moyenneGenerale.toFixed(2), 135, y+5); // اختصار لمنع التداخل
                 doc.text(student.statusSemestre, 170, y+5);
                 y += 8;
 
@@ -973,7 +973,7 @@
                         doc.setFillColor(232, 244, 252);
                         doc.rect(20, y, 170, 8, 'F');
                         doc.text(moduleCode, 22, y+5);
-                        doc.text(moduleNames[moduleCode], 45, y+5);
+                        doc.text(moduleNames[moduleCode], 40, y+5);
                         doc.text(module.moyenne.toFixed(2), 115, y+5);
                         doc.text(module.credit.toFixed(1), 155, y+5);
                         doc.text(module.status, 170, y+5);
@@ -985,7 +985,7 @@
                                 const subjectCredit = subject.status === "C" ? "3.0" : "0.0";
                                 
                                 doc.text('', 22, y+5);
-                                doc.text(subjectsConfig[subjectCode], 45, y+5);
+                                doc.text(subjectsConfig[subjectCode], 40, y+5);
                                 doc.text(subject.tp !== undefined ? subject.tp.toFixed(2) : '', 85, y+5);
                                 doc.text(subject.devoir.toFixed(2), 100, y+5);
                                 doc.text(subject.exam.toFixed(2), 115, y+5);
