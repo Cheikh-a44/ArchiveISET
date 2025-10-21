@@ -182,21 +182,20 @@
         .results-table th {
             background: #34495e;
             color: white;
-            padding: 12px;
+            padding: 15px 8px;
             text-align: center;
             font-weight: 600;
             border: 1px solid #ddd;
+            white-space: nowrap;
         }
         .results-table td {
-            padding: 10px;
+            padding: 12px 8px;
             border: 1px solid #ddd;
             text-align: center;
+            vertical-align: middle;
         }
         .results-table tr:nth-child(even) {
             background-color: #f9f9f9;
-        }
-        .results-table tr:hover {
-            background-color: #f1f1f1;
         }
         .module-row {
             background-color: #e8f4fc !important;
@@ -233,27 +232,33 @@
             border-radius: 8px;
             margin: 10px 0;
         }
-        .note-details {
-            display: flex;
-            gap: 10px;
-            margin: 5px 0;
-            font-size: 12px;
-            color: #666;
-        }
-        .note-item {
-            background: #f8f9fa;
-            padding: 4px 8px;
-            border-radius: 4px;
-            border: 1px solid #ddd;
-        }
-        .subject-details {
-            margin-top: 5px;
-        }
         .no-students {
             text-align: center;
             color: #7f8c8d;
             padding: 20px;
             font-style: italic;
+        }
+        
+        /* تحسينات الجدول الجديدة */
+        .results-table {
+            min-width: 1000px;
+        }
+        .subject-name-cell {
+            text-align: left;
+            padding-left: 15px;
+            min-width: 250px;
+            max-width: 300px;
+            word-wrap: break-word;
+        }
+        .student-name-cell {
+            text-align: left;
+            padding-left: 15px;
+            font-weight: bold;
+            background-color: #f0f8ff;
+        }
+        .matricule-cell {
+            font-weight: bold;
+            background-color: #f0f8ff;
         }
     </style>
 </head>
@@ -268,12 +273,12 @@
             
             <div class="form-group">
                 <label for="student-name">Nom complet de l'étudiant:</label>
-                <input type="text" id="student-name" placeholder="Ex: Cheikh Ahmedou Mohamed Lemine">
+                <input type="text" id="student-name" placeholder="">
             </div>
             
             <div class="form-group">
-                <label for="student-id">Numéro d'étudiant (ID):</label>
-                <input type="text" id="student-id" placeholder="Ex: 24001581">
+                <label for="student-id">Numéro d'étudiant (Matricule):</label>
+                <input type="text" id="student-id" placeholder="">
             </div>
             
             <h4>📊 Notes des matières:</h4>
@@ -401,7 +406,7 @@
                 const id = document.getElementById('student-id').value.trim();
                 
                 if (!name || !id) {
-                    alert('Veuillez remplir le nom et l\'ID de l\'étudiant');
+                    alert('Veuillez remplir le nom et le matricule de l\'étudiant');
                     return;
                 }
 
@@ -561,7 +566,7 @@
                         <div class="student-header">
                             <div>
                                 <span class="student-name">${student.name}</span>
-                                <span class="student-id"> (ID: ${student.id})</span>
+                                <span class="student-id"> (Matricule: ${student.id})</span>
                             </div>
                             <div>
                                 ${student.calculated ? 
@@ -593,11 +598,11 @@
                                 <tbody>
                         `;
 
-                        // معلومات الطالب والمعدل الفصلي
+                        // صف معلومات الطالب - كما في الصورة
                         html += `
                             <tr class="student-info-row">
-                                <td>${student.id}</td>
-                                <td>${student.name}</td>
+                                <td class="matricule-cell">${student.id}</td>
+                                <td class="student-name-cell">${student.name}</td>
                                 <td></td>
                                 <td></td>
                                 <td></td>
@@ -611,11 +616,11 @@
                         html += `
                             <tr class="stage-row">
                                 <td>${student.id.substring(0, 4)}</td>
+                                <td>Stage S2</td>
                                 <td></td>
                                 <td></td>
                                 <td></td>
-                                <td></td>
-                                <td>Stage S2 : 6.0</td>
+                                <td>6.0</td>
                                 <td></td>
                                 <td class="status-valid">Validé</td>
                             </tr>
@@ -647,7 +652,7 @@
                                         html += `
                                             <tr>
                                                 <td></td>
-                                                <td>${SUBJECTS[subjectCode]}</td>
+                                                <td class="subject-name-cell">${SUBJECTS[subjectCode]}</td>
                                                 <td>${subject.tp !== undefined ? subject.tp.toFixed(2) : ''}</td>
                                                 <td>${subject.devoir.toFixed(2)}</td>
                                                 <td>${subject.exam.toFixed(2)}</td>
@@ -700,11 +705,11 @@
                     doc.setFontSize(16);
                     doc.text('ENSTA - Résultats Semestre', 20, 20);
                     doc.setFontSize(12);
-                    doc.text(`Étudiant: ${student.name} (ID: ${student.id})`, 20, 35);
+                    doc.text(`Étudiant: ${student.name} (Matricule: ${student.id})`, 20, 35);
                     doc.text(`Moyenne Semestre: ${student.moyenneGenerale.toFixed(2)} - ${student.statusSemestre}`, 20, 45);
 
                     // جدول النتائج
-                    const headers = ['Module/Matière', 'TP', 'CC', 'Examen', 'NFe', 'Crédit', 'Observations'];
+                    const headers = ['Numéro', 'Nom et Prénom', 'TP', 'CC', 'Examen', 'NFe', 'Crédit', 'Observations'];
                     let y = 65;
                     
                     // En-têtes du tableau
@@ -712,15 +717,25 @@
                     doc.setTextColor(255, 255, 255);
                     doc.rect(20, y, 170, 10, 'F');
                     doc.text(headers[0], 22, y+7);
-                    doc.text(headers[1], 70, y+7);
-                    doc.text(headers[2], 90, y+7);
-                    doc.text(headers[3], 110, y+7);
-                    doc.text(headers[4], 130, y+7);
-                    doc.text(headers[5], 150, y+7);
-                    doc.text(headers[6], 165, y+7);
+                    doc.text(headers[1], 45, y+7);
+                    doc.text(headers[2], 85, y+7);
+                    doc.text(headers[3], 100, y+7);
+                    doc.text(headers[4], 115, y+7);
+                    doc.text(headers[5], 135, y+7);
+                    doc.text(headers[6], 155, y+7);
+                    doc.text(headers[7], 170, y+7);
                     
                     y += 10;
                     doc.setTextColor(0, 0, 0);
+
+                    // معلومات الطالب
+                    doc.setFillColor(240, 248, 255);
+                    doc.rect(20, y, 170, 8, 'F');
+                    doc.text(student.id, 22, y+5);
+                    doc.text(student.name, 45, y+5);
+                    doc.text(`Moyenne Semestre: ${student.moyenneGenerale.toFixed(2)}`, 135, y+5);
+                    doc.text(student.statusSemestre, 170, y+5);
+                    y += 8;
 
                     // الوحدات والمواد
                     Object.keys(MODULES).forEach(moduleCode => {
@@ -730,23 +745,25 @@
                             // صف الوحدة
                             doc.setFillColor(232, 244, 252);
                             doc.rect(20, y, 170, 8, 'F');
-                            doc.text(`${moduleCode} ${MODULE_NAMES[moduleCode]}`, 22, y+5);
-                            doc.text(module.moyenne.toFixed(2), 110, y+5);
-                            doc.text('6.0', 150, y+5);
-                            doc.text(module.status, 165, y+5);
+                            doc.text(moduleCode, 22, y+5);
+                            doc.text(MODULE_NAMES[moduleCode], 45, y+5);
+                            doc.text(module.moyenne.toFixed(2), 115, y+5);
+                            doc.text('6.0', 155, y+5);
+                            doc.text(module.status, 170, y+5);
                             y += 8;
 
                             // صفوف المواد
                             MODULES[moduleCode].forEach(subjectCode => {
                                 const subject = student.subjects[subjectCode];
                                 if (subject) {
-                                    doc.text(SUBJECTS[subjectCode], 25, y+5);
-                                    doc.text(subject.tp !== undefined ? subject.tp.toFixed(2) : '', 70, y+5);
-                                    doc.text(subject.devoir.toFixed(2), 90, y+5);
-                                    doc.text(subject.exam.toFixed(2), 110, y+5);
-                                    doc.text(subject.moyenne.toFixed(2), 130, y+5);
-                                    doc.text('3.0', 150, y+5);
-                                    doc.text(subject.status, 165, y+5);
+                                    doc.text('', 22, y+5);
+                                    doc.text(SUBJECTS[subjectCode], 45, y+5);
+                                    doc.text(subject.tp !== undefined ? subject.tp.toFixed(2) : '', 85, y+5);
+                                    doc.text(subject.devoir.toFixed(2), 100, y+5);
+                                    doc.text(subject.exam.toFixed(2), 115, y+5);
+                                    doc.text(subject.moyenne.toFixed(2), 135, y+5);
+                                    doc.text('3.0', 155, y+5);
+                                    doc.text(subject.status, 170, y+5);
                                     y += 6;
                                 }
                             });
