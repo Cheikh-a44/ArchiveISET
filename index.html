@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Système de Calcul des Moyennes - ENSTA</title>
+    <title>Système de Calcul des Moyennes - ISET</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         * {
@@ -182,20 +182,21 @@
         .results-table th {
             background: #34495e;
             color: white;
-            padding: 15px 8px;
+            padding: 12px;
             text-align: center;
             font-weight: 600;
             border: 1px solid #ddd;
-            white-space: nowrap;
         }
         .results-table td {
-            padding: 12px 8px;
+            padding: 10px;
             border: 1px solid #ddd;
             text-align: center;
-            vertical-align: middle;
         }
         .results-table tr:nth-child(even) {
             background-color: #f9f9f9;
+        }
+        .results-table tr:hover {
+            background-color: #f1f1f1;
         }
         .module-row {
             background-color: #e8f4fc !important;
@@ -207,10 +208,6 @@
         }
         .semester-average-row {
             background-color: #fff3cd !important;
-            font-weight: bold;
-        }
-        .stage-row {
-            background-color: #e8f5e9 !important;
             font-weight: bold;
         }
         .delete-btn {
@@ -238,33 +235,15 @@
             padding: 20px;
             font-style: italic;
         }
-        
-        /* تحسينات الجدول الجديدة */
-        .results-table {
-            min-width: 1000px;
-        }
         .subject-name-cell {
             text-align: left;
             padding-left: 15px;
-            min-width: 250px;
-            max-width: 300px;
-            word-wrap: break-word;
-        }
-        .student-name-cell {
-            text-align: left;
-            padding-left: 15px;
-            font-weight: bold;
-            background-color: #f0f8ff;
-        }
-        .matricule-cell {
-            font-weight: bold;
-            background-color: #f0f8ff;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🎓 Système de Calcul des Moyennes - ENSTA</h1>
+        <h1>🎓 Système de Calcul des Moyennes - ISET</h1>
         <div class="subtitle">Saisie manuelle des notes - Génération automatique des résultats</div>
         
         <!-- نموذج إدخال الطالب -->
@@ -598,31 +577,17 @@
                                 <tbody>
                         `;
 
-                        // صف معلومات الطالب - كما في الصورة
+                        // صف معلومات الطالب - الاسم والرقم في نفس السطر مع العناوين
                         html += `
                             <tr class="student-info-row">
-                                <td class="matricule-cell">${student.id}</td>
-                                <td class="student-name-cell">${student.name}</td>
+                                <td>${student.id}</td>
+                                <td class="subject-name-cell">${student.name}</td>
                                 <td></td>
                                 <td></td>
                                 <td></td>
-                                <td>Moyenne Semestre : ${student.moyenneGenerale.toFixed(2)}</td>
-                                <td></td>
-                                <td class="${student.statusSemestre === 'Validé' ? 'status-valid' : 'status-non-valid'}">${student.statusSemestre}</td>
-                            </tr>
-                        `;
-
-                        // معلومات التدريب (Stage)
-                        html += `
-                            <tr class="stage-row">
-                                <td>${student.id.substring(0, 4)}</td>
-                                <td>Stage S2</td>
+                                <td>${student.moyenneGenerale.toFixed(2)}</td>
                                 <td></td>
                                 <td></td>
-                                <td></td>
-                                <td>6.0</td>
-                                <td></td>
-                                <td class="status-valid">Validé</td>
                             </tr>
                         `;
 
@@ -631,6 +596,9 @@
                             const module = student.modules[moduleCode];
                             
                             if (module) {
+                                // حساب الرصيد للوحدة (0 إذا كانت NV)
+                                const moduleCredit = module.status === "V" ? "6.0" : "0.0";
+                                
                                 // صف الوحدة
                                 html += `
                                     <tr class="module-row">
@@ -640,7 +608,7 @@
                                         <td></td>
                                         <td>${module.moyenne.toFixed(2)}</td>
                                         <td></td>
-                                        <td>6.0</td>
+                                        <td>${moduleCredit}</td>
                                         <td class="${module.status === 'V' ? 'status-valid' : 'status-non-valid'}">${module.status}</td>
                                     </tr>
                                 `;
@@ -649,6 +617,9 @@
                                 MODULES[moduleCode].forEach(subjectCode => {
                                     const subject = student.subjects[subjectCode];
                                     if (subject) {
+                                        // حساب الرصيد للمادة (0 إذا كانت NC)
+                                        const subjectCredit = subject.status === "C" ? "3.0" : "0.0";
+                                        
                                         html += `
                                             <tr>
                                                 <td></td>
@@ -657,7 +628,7 @@
                                                 <td>${subject.devoir.toFixed(2)}</td>
                                                 <td>${subject.exam.toFixed(2)}</td>
                                                 <td>${subject.moyenne.toFixed(2)}</td>
-                                                <td>3.0</td>
+                                                <td>${subjectCredit}</td>
                                                 <td class="${subject.status === 'C' ? 'status-C' : 'status-NC'}">${subject.status}</td>
                                             </tr>
                                         `;
@@ -701,9 +672,9 @@
                         doc.addPage();
                     }
 
-                    // En-tête
+                    // En-tête - تغيير ENSTA إلى ISET
                     doc.setFontSize(16);
-                    doc.text('ENSTA - Résultats Semestre', 20, 20);
+                    doc.text('ISET - Résultats Semestre', 20, 20);
                     doc.setFontSize(12);
                     doc.text(`Étudiant: ${student.name} (Matricule: ${student.id})`, 20, 35);
                     doc.text(`Moyenne Semestre: ${student.moyenneGenerale.toFixed(2)} - ${student.statusSemestre}`, 20, 45);
@@ -728,13 +699,13 @@
                     y += 10;
                     doc.setTextColor(0, 0, 0);
 
-                    // معلومات الطالب
+                    // معلومات الطالب - الاسم والرقم في نفس السطر
                     doc.setFillColor(240, 248, 255);
                     doc.rect(20, y, 170, 8, 'F');
                     doc.text(student.id, 22, y+5);
                     doc.text(student.name, 45, y+5);
-                    doc.text(`Moyenne Semestre: ${student.moyenneGenerale.toFixed(2)}`, 135, y+5);
-                    doc.text(student.statusSemestre, 170, y+5);
+                    doc.text(student.moyenneGenerale.toFixed(2), 135, y+5);
+                    doc.text('', 170, y+5); // حذف Validé/Non Validé
                     y += 8;
 
                     // الوحدات والمواد
@@ -742,13 +713,16 @@
                         const module = student.modules[moduleCode];
                         
                         if (module) {
+                            // حساب الرصيد للوحدة (0 إذا كانت NV)
+                            const moduleCredit = module.status === "V" ? "6.0" : "0.0";
+                            
                             // صف الوحدة
                             doc.setFillColor(232, 244, 252);
                             doc.rect(20, y, 170, 8, 'F');
                             doc.text(moduleCode, 22, y+5);
                             doc.text(MODULE_NAMES[moduleCode], 45, y+5);
                             doc.text(module.moyenne.toFixed(2), 115, y+5);
-                            doc.text('6.0', 155, y+5);
+                            doc.text(moduleCredit, 155, y+5);
                             doc.text(module.status, 170, y+5);
                             y += 8;
 
@@ -756,13 +730,16 @@
                             MODULES[moduleCode].forEach(subjectCode => {
                                 const subject = student.subjects[subjectCode];
                                 if (subject) {
+                                    // حساب الرصيد للمادة (0 إذا كانت NC)
+                                    const subjectCredit = subject.status === "C" ? "3.0" : "0.0";
+                                    
                                     doc.text('', 22, y+5);
                                     doc.text(SUBJECTS[subjectCode], 45, y+5);
                                     doc.text(subject.tp !== undefined ? subject.tp.toFixed(2) : '', 85, y+5);
                                     doc.text(subject.devoir.toFixed(2), 100, y+5);
                                     doc.text(subject.exam.toFixed(2), 115, y+5);
                                     doc.text(subject.moyenne.toFixed(2), 135, y+5);
-                                    doc.text('3.0', 155, y+5);
+                                    doc.text(subjectCredit, 155, y+5);
                                     doc.text(subject.status, 170, y+5);
                                     y += 6;
                                 }
@@ -771,7 +748,7 @@
                     });
                 });
 
-                doc.save('rapport_moyennes_ENSTA.pdf');
+                doc.save('rapport_moyennes_ISET.pdf');
             }
 
             // دالة حذف الطالب
