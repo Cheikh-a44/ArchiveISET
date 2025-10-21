@@ -195,19 +195,12 @@
         .results-table tr:nth-child(even) {
             background-color: #f9f9f9;
         }
-        .results-table tr:hover {
-            background-color: #f1f1f1;
-        }
         .module-row {
             background-color: #e8f4fc !important;
             font-weight: bold;
         }
         .student-info-row {
             background-color: #f0f8ff !important;
-            font-weight: bold;
-        }
-        .semester-average-row {
-            background-color: #fff3cd !important;
             font-weight: bold;
         }
         .delete-btn {
@@ -219,16 +212,6 @@
             cursor: pointer;
             font-size: 12px;
         }
-        .moyenne-generale {
-            font-size: 1.2em;
-            font-weight: bold;
-            color: #2c3e50;
-            text-align: center;
-            padding: 10px;
-            background: #e8f4fc;
-            border-radius: 8px;
-            margin: 10px 0;
-        }
         .no-students {
             text-align: center;
             color: #7f8c8d;
@@ -238,6 +221,23 @@
         .subject-name-cell {
             text-align: left;
             padding-left: 15px;
+        }
+        .student-info-header {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #dee2e6;
+        }
+        .student-info-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        .student-info-subtitle {
+            color: #7f8c8d;
+            font-weight: 500;
         }
     </style>
 </head>
@@ -519,9 +519,19 @@
                 student.modules = {};
                 Object.keys(MODULES).forEach(moduleCode => {
                     if (moduleAverages[moduleCode]) {
+                        // حساب مجموع الرصيد للوحدة (جمع رصيد المادتين)
+                        let totalCredit = 0;
+                        MODULES[moduleCode].forEach(subjectCode => {
+                            const subject = student.subjects[subjectCode];
+                            if (subject) {
+                                totalCredit += subject.status === "C" ? 3 : 0;
+                            }
+                        });
+                        
                         student.modules[moduleCode] = {
                             moyenne: moduleAverages[moduleCode],
-                            status: modStatus[moduleCode]
+                            status: modStatus[moduleCode],
+                            credit: totalCredit
                         };
                     }
                 });
@@ -560,6 +570,14 @@
                     `;
 
                     if (student.calculated) {
+                        // معلومات الطالب كما في الصورة
+                        html += `
+                            <div class="student-info-header">
+                                <div class="student-info-title">Résultats du Semestre 2</div>
+                                <div class="student-info-subtitle">Filière : L1TC-L1 Licence TC</div>
+                            </div>
+                        `;
+
                         html += `
                             <table class="results-table">
                                 <thead>
@@ -577,7 +595,7 @@
                                 <tbody>
                         `;
 
-                        // صف معلومات الطالب - الاسم والرقم في نفس السطر مع العناوين
+                        // صف معلومات الطالب - تماماً كما في الصورة الأصلية
                         html += `
                             <tr class="student-info-row">
                                 <td>${student.id}</td>
@@ -585,35 +603,32 @@
                                 <td></td>
                                 <td></td>
                                 <td></td>
-                                <td>${student.moyenneGenerale.toFixed(2)}</td>
+                                <td>Moyenne Semestre : ${student.moyenneGenerale.toFixed(2)}</td>
                                 <td></td>
-                                <td></td>
+                                <td class="${student.statusSemestre === 'Validé' ? 'status-valid' : 'status-non-valid'}">${student.statusSemestre}</td>
                             </tr>
                         `;
 
-                        // عرض الوحدات والمواد
+                        // عرض الوحدات والمواد - تماماً كما في الصورة الأصلية
                         Object.keys(MODULES).forEach(moduleCode => {
                             const module = student.modules[moduleCode];
                             
                             if (module) {
-                                // حساب الرصيد للوحدة (0 إذا كانت NV)
-                                const moduleCredit = module.status === "V" ? "6.0" : "0.0";
-                                
-                                // صف الوحدة
+                                // صف الوحدة - تماماً كما في الصورة الأصلية
                                 html += `
                                     <tr class="module-row">
                                         <td>${moduleCode}</td>
-                                        <td>${MODULE_NAMES[moduleCode]}</td>
+                                        <td class="subject-name-cell">${MODULE_NAMES[moduleCode]}</td>
                                         <td></td>
                                         <td></td>
                                         <td>${module.moyenne.toFixed(2)}</td>
                                         <td></td>
-                                        <td>${moduleCredit}</td>
+                                        <td>${module.credit.toFixed(1)}</td>
                                         <td class="${module.status === 'V' ? 'status-valid' : 'status-non-valid'}">${module.status}</td>
                                     </tr>
                                 `;
 
-                                // صفوف المواد التابعة للوحدة
+                                // صفوف المواد التابعة للوحدة - تماماً كما في الصورة الأصلية
                                 MODULES[moduleCode].forEach(subjectCode => {
                                     const subject = student.subjects[subjectCode];
                                     if (subject) {
@@ -672,16 +687,15 @@
                         doc.addPage();
                     }
 
-                    // En-tête - تغيير ENSTA إلى ISET
+                    // En-tête - تماماً كما في الصورة الأصلية
                     doc.setFontSize(16);
-                    doc.text('ISET - Résultats Semestre', 20, 20);
+                    doc.text('Résultats du Semestre 2', 20, 20);
                     doc.setFontSize(12);
-                    doc.text(`Étudiant: ${student.name} (Matricule: ${student.id})`, 20, 35);
-                    doc.text(`Moyenne Semestre: ${student.moyenneGenerale.toFixed(2)} - ${student.statusSemestre}`, 20, 45);
+                    doc.text('Filière : L1TC-L1 Licence TC', 20, 30);
 
-                    // جدول النتائج
+                    // جدول النتائج - تماماً كما في الصورة الأصلية
                     const headers = ['Numéro', 'Nom et Prénom', 'TP', 'CC', 'Examen', 'NFe', 'Crédit', 'Observations'];
-                    let y = 65;
+                    let y = 45;
                     
                     // En-têtes du tableau
                     doc.setFillColor(52, 73, 94);
@@ -699,30 +713,27 @@
                     y += 10;
                     doc.setTextColor(0, 0, 0);
 
-                    // معلومات الطالب - الاسم والرقم في نفس السطر
+                    // معلومات الطالب - تماماً كما في الصورة الأصلية
                     doc.setFillColor(240, 248, 255);
                     doc.rect(20, y, 170, 8, 'F');
                     doc.text(student.id, 22, y+5);
                     doc.text(student.name, 45, y+5);
-                    doc.text(student.moyenneGenerale.toFixed(2), 135, y+5);
-                    doc.text('', 170, y+5); // حذف Validé/Non Validé
+                    doc.text('Moyenne Semestre : ' + student.moyenneGenerale.toFixed(2), 135, y+5);
+                    doc.text(student.statusSemestre, 170, y+5);
                     y += 8;
 
-                    // الوحدات والمواد
+                    // الوحدات والمواد - تماماً كما في الصورة الأصلية
                     Object.keys(MODULES).forEach(moduleCode => {
                         const module = student.modules[moduleCode];
                         
                         if (module) {
-                            // حساب الرصيد للوحدة (0 إذا كانت NV)
-                            const moduleCredit = module.status === "V" ? "6.0" : "0.0";
-                            
                             // صف الوحدة
                             doc.setFillColor(232, 244, 252);
                             doc.rect(20, y, 170, 8, 'F');
                             doc.text(moduleCode, 22, y+5);
                             doc.text(MODULE_NAMES[moduleCode], 45, y+5);
                             doc.text(module.moyenne.toFixed(2), 115, y+5);
-                            doc.text(moduleCredit, 155, y+5);
+                            doc.text(module.credit.toFixed(1), 155, y+5);
                             doc.text(module.status, 170, y+5);
                             y += 8;
 
